@@ -2480,12 +2480,12 @@ function scheduleSave() {
 
 // === CURRENT DAY HELPERS ===
 function getCurrentDay() {
-  if (!state.data.days[state.currentDate]) {
-    // Yeni gün oluşturuluyor - dünkü kalan ekmeği bugünün "Dünden Kalan"ına aktar
-    const yesterdayLeft = getYesterdayBreadLeft(state.currentDate);
+  let day = state.data.days[state.currentDate];
+  const isNewDay = !day;
 
+  if (isNewDay) {
     state.data.days[state.currentDate] = {
-      breadPrev: yesterdayLeft, // dünden otomatik gelir, kullanıcı isterse değiştirir
+      breadPrev: null,
       breadIn: null,
       breadLeft: null,
       breadPlainEaten: null,
@@ -2494,12 +2494,25 @@ function getCurrentDay() {
       notesAuthor: '',
       notesUpdated: null
     };
+    day = state.data.days[state.currentDate];
   }
+
   // Backward compat
-  if (!('breadPlainEaten' in state.data.days[state.currentDate])) {
-    state.data.days[state.currentDate].breadPlainEaten = null;
+  if (!('breadPlainEaten' in day)) day.breadPlainEaten = null;
+
+  // Otomatik dünden kalan aktarımı:
+  // - Manuel değiştirilmediyse (_breadPrevManual flag yoksa)
+  // - breadPrev şu an null ise
+  // - Dünkü gün'ün breadLeft değeri varsa
+  // → bugünün breadPrev'ine yaz
+  if (!day._breadPrevManual && (day.breadPrev == null || day.breadPrev === '')) {
+    const yesterdayLeft = getYesterdayBreadLeft(state.currentDate);
+    if (yesterdayLeft != null) {
+      day.breadPrev = yesterdayLeft;
+    }
   }
-  return state.data.days[state.currentDate];
+
+  return day;
 }
 
 function getYesterdayBreadLeft(currentDateIso) {
