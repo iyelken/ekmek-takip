@@ -1808,6 +1808,33 @@ button { cursor: pointer; }
   </div>
 </div>
 
+<!-- Staff Repair Modal -->
+<div class="modal-backdrop" id="staffRepairModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>🔧 Çalışan Girişini Etkinleştir</h3>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--accent-soft);border:1px solid rgba(245,158,11,0.3);border-radius:var(--radius-md);padding:12px;font-size:13px;line-height:1.6;color:var(--text-dim);margin-bottom:16px">
+        Bu hesap eski bir versiyonda kuruldu ve çalışan girişi devre dışı.<br><br>
+        <strong style="color:var(--accent)">Tek seferlik düzeltme:</strong> Çalışan şifresini buraya gir (yeni belirleyebilirsin), sistem otomatik düzelir. Verilerin kaybolmaz.
+      </div>
+      <div class="form-group">
+        <label class="form-label">Çalışan Şifresi</label>
+        <input type="password" class="form-input" id="repairStaffPwd" placeholder="En az 6 karakter" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Şifreyi Tekrarla</label>
+        <input type="password" class="form-input" id="repairStaffPwd2" placeholder="Tekrar gir" autocomplete="new-password">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('staffRepairModal')">Sonra</button>
+      <button class="btn btn-primary" onclick="repairStaffBlob()">Düzelt</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -2220,6 +2247,99 @@ function enterApp() {
 
   setupRealtimeSync();
   renderAll();
+
+  // ÖNEMLİ: Eski versiyonlardan kalma hesaplarda encryptedStaff blob'u olmayabilir.
+  // Patron girdiğinde bunu kontrol edip kullanıcıyı bilgilendir.
+  if (state.role === 'patron') {
+    setTimeout(() => checkStaffBlobHealth(), 1500);
+  }
+}
+
+async function checkStaffBlobHealth() {
+  try {
+    const ref = window.fbDoc(window.fbDb, 'ekmek-takip', state.cloudId);
+    const snap = await window.fbGetDoc(ref);
+    if (!snap.exists()) return;
+    const docData = snap.data();
+
+    // Staff blob var mı? Yoksa ya da bozuksa onarım gerekli
+    let staffOk = false;
+    if (docData.encryptedStaff && state.data._wrappedStaffPwd && state.data._innerKey) {
+      try {
+        const staffPwd = decryptData(state.data._wrappedStaffPwd, state.data._innerKey);
+        if (staffPwd) {
+          const test = decryptData(docData.encryptedStaff, staffPwd);
+          if (test) staffOk = true;
+        }
+      } catch (e) {}
+    }
+
+    if (!staffOk) {
+      // Onarım modalını aç
+      setTimeout(() => {
+        if (confirm('⚠️ Çalışan girişi şu an çalışmıyor.\n\nBu hesap eski versiyonda kuruldu, çalışan şifresi tekrar ayarlanmalı.\n\nŞimdi düzeltmek ister misin? (1 dakika sürer)')) {
+          openStaffRepairModal();
+        }
+      }, 100);
+    }
+  } catch (e) {
+    console.error('Staff blob check failed:', e);
+  }
+}
+
+function openStaffRepairModal() {
+  $('repairStaffPwd').value = '';
+  $('repairStaffPwd2').value = '';
+  openModal('staffRepairModal');
+}
+
+async function repairStaffBlob() {
+  const pwd = $('repairStaffPwd').value.trim();
+  const pwd2 = $('repairStaffPwd2').value.trim();
+
+  if (pwd.length < 6) return showToast('Şifre en az 6 karakter olmalı', 'error');
+  if (pwd !== pwd2) return showToast('Şifreler eşleşmiyor', 'error');
+  if (pwd === state.password) return showToast('Çalışan şifresi patron şifresinden farklı olmalı', 'error');
+
+  setSyncStatus('syncing');
+
+  try {
+    // Yeni staff şifresinin hash'ini güncelle
+    state.data.passwords.staff = hashPassword(pwd);
+
+    // Innerkey & wrap
+    if (!state.data._innerKey) {
+      state.data._innerKey = CryptoJS.lib.WordArray.random(32).toString();
+    }
+    state.data._wrappedStaffPwd = encryptData(pwd, state.data._innerKey);
+    state.data._wrappedPatronPwd = encryptData(state.password, state.data._innerKey);
+
+    // Hem patron hem staff blob'u oluştur
+    const patronEncrypted = encryptData(state.data, state.password);
+    const staffEncrypted = encryptData(state.data, pwd);
+
+    state._lastSavedAt = Date.now();
+    const ref = window.fbDoc(window.fbDb, 'ekmek-takip', state.cloudId);
+    await window.fbSetDoc(ref, {
+      encrypted: patronEncrypted,
+      encryptedStaff: staffEncrypted,
+      patronHash: state.data.passwords.patron,
+      staffHash: state.data.passwords.staff,
+      updatedAt: state._lastSavedAt
+    });
+
+    setSyncStatus('');
+    closeModal('staffRepairModal');
+    showToast('✓ Çalışan girişi etkinleştirildi!', 'success');
+    setTimeout(() => {
+      alert('✅ Düzeltildi!\n\nArtık çalışanlar bu şifreyle giriş yapabilir:\n\n' + pwd + '\n\nNot al ve çalışanlarınla paylaş.');
+    }, 500);
+
+  } catch (e) {
+    console.error(e);
+    showToast('Hata: ' + e.message, 'error');
+    setSyncStatus('offline');
+  }
 }
 
 // === REALTIME SYNC ===
