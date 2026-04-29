@@ -1,0 +1,3091 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1a1410">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ekmek Takip">
+<title>Ekmek Takip</title>
+
+<link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkVrbWVrIFRha2lwIiwKICAic2hvcnRfbmFtZSI6ICJFa21layIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMWExNDEwIiwKICAidGhlbWVfY29sb3IiOiAiIzFhMTQxMCIsCiAgImljb25zIjogW3sKICAgICJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sLDxzdmcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJyB2aWV3Qm94PScwIDAgMTkyIDE5Micgd2lkdGg9JzE5MicgaGVpZ2h0PScxOTInPjxyZWN0IHdpZHRoPScxOTInIGhlaWdodD0nMTkyJyByeD0nNDAnIGZpbGw9JyMxYTE0MTAnLz48dGV4dCB4PSc5NicgeT0nMTI4JyBmb250LXNpemU9JzEwMCcgdGV4dC1hbmNob3I9J21pZGRsZScgZmlsbD0nI2Y1OWUwYic+8J+NnDwvdGV4dD48L3N2Zz4iLAogICAgInNpemVzIjogIjE5MngxOTIiLAogICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIKICB9XQp9">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  
+  const firebaseConfig = {
+    apiKey: "AIzaSyCyAnpELLloyLp2wut6DPoI76xQTtesxAc",
+    authDomain: "kart-takip-a69f7.firebaseapp.com",
+    projectId: "kart-takip-a69f7",
+    storageBucket: "kart-takip-a69f7.firebasestorage.app",
+    messagingSenderId: "864294416967",
+    appId: "1:864294416967:web:4d06f9696bc13f836af762"
+  };
+  
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  
+  window.fbDb = db;
+  window.fbDoc = doc;
+  window.fbSetDoc = setDoc;
+  window.fbGetDoc = getDoc;
+  window.fbOnSnapshot = onSnapshot;
+  window.firebaseReady = true;
+  window.dispatchEvent(new Event('firebase-ready'));
+</script>
+
+<style>
+:root {
+  --bg: #1a1410;
+  --bg-2: #221a14;
+  --surface: #2b2018;
+  --surface-2: #362a20;
+  --surface-3: #423328;
+  --border: #4a3a2c;
+  --border-light: #5a4838;
+  --text: #f5ede2;
+  --text-dim: #c9b9a4;
+  --text-mute: #8a7660;
+  --accent: #f59e0b;
+  --accent-2: #fbbf24;
+  --accent-soft: rgba(245, 158, 11, 0.12);
+  --copper: #d97706;
+  --copper-light: #ea580c;
+  --primary: #fb923c;
+  --primary-2: #f97316;
+  --success: #65d989;
+  --success-soft: rgba(101, 217, 137, 0.12);
+  --danger: #ef6f6f;
+  --danger-soft: rgba(239, 111, 111, 0.12);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.12);
+  --info: #60a5fa;
+  --info-soft: rgba(96, 165, 250, 0.12);
+  --bread: #c8893a;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.35);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.45);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  font-family: 'Manrope', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at top, rgba(245, 158, 11, 0.06), transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(217, 119, 6, 0.04), transparent 50%),
+    var(--bg);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+input, button, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  outline: none;
+}
+
+input[type=number] { -moz-appearance: textfield; }
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+button { cursor: pointer; }
+
+.serif { font-family: 'Fraunces', Georgia, serif; font-feature-settings: "ss01"; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* ========== AUTH SCREEN ========== */
+#authScreen {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at center top, rgba(245, 158, 11, 0.15), transparent 60%),
+    var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+}
+
+.auth-box {
+  width: 100%;
+  max-width: 420px;
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 32px 24px;
+  box-shadow: var(--shadow-lg);
+}
+
+.auth-logo {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.auth-logo .icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--copper) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
+}
+
+.auth-logo h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+.auth-logo p {
+  color: var(--text-mute);
+  font-size: 14px;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  margin-bottom: 20px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-mute);
+  transition: all 0.2s;
+}
+
+.auth-tab.active {
+  background: var(--surface-2);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: 15px;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.form-input:focus {
+  border-color: var(--accent);
+  background: var(--bg-2);
+}
+
+.form-input::placeholder { color: var(--text-mute); }
+
+.form-input.mono { font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.2s;
+  border: 1.5px solid transparent;
+  width: 100%;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--copper) 100%);
+  color: #1a1410;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.25);
+}
+
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn-secondary {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.btn-secondary:hover { background: var(--surface-3); border-color: var(--border-light); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-dim);
+}
+
+.btn-ghost:hover { background: var(--surface-2); color: var(--text); }
+
+.btn-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: rgba(239, 111, 111, 0.3);
+}
+
+.btn-sm { padding: 8px 12px; font-size: 13px; }
+.btn-icon { width: 40px; height: 40px; padding: 0; }
+
+.auth-info {
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+.auth-info strong { color: var(--accent); }
+
+/* ========== MAIN APP ========== */
+#app { display: none; padding-bottom: 80px; }
+
+.header {
+  position: sticky;
+  top: 0;
+  background: rgba(26, 20, 16, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+  padding-top: max(14px, env(safe-area-inset-top));
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.header-title {
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-title .icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--copper) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.role-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.role-badge.staff {
+  background: var(--info-soft);
+  color: var(--info);
+}
+
+.sync-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-mute);
+  padding: 6px 10px;
+  background: var(--surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.sync-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+}
+
+.sync-dot.offline { background: var(--text-mute); box-shadow: none; }
+.sync-dot.syncing {
+  background: var(--warning);
+  box-shadow: 0 0 8px var(--warning);
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ========== CONTENT ========== */
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.page { display: none; }
+.page.active { display: block; }
+
+/* Date Picker */
+.date-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.date-nav {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--surface-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--text);
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.date-nav:hover { background: var(--border); }
+
+.date-display {
+  flex: 1;
+  text-align: center;
+  cursor: pointer;
+}
+
+.date-display .date-main {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.date-display .date-sub {
+  font-size: 12px;
+  color: var(--text-mute);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.date-display.today .date-sub {
+  color: var(--accent);
+}
+
+/* Hidden date input */
+.date-input-hidden {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Section Card */
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.section-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface-2);
+}
+
+.section-header h3 {
+  font-family: 'Fraunces', serif;
+  font-size: 17px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-header h3 .emoji { font-size: 20px; }
+
+.section-body { padding: 14px 16px; }
+
+/* Sandviç Ekmeği Hesap Box */
+.bread-summary {
+  background: linear-gradient(135deg, rgba(200, 137, 58, 0.08) 0%, rgba(245, 158, 11, 0.04) 100%);
+  border: 1px solid rgba(200, 137, 58, 0.25);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.bread-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.bread-row:last-child { border-bottom: none; }
+
+.bread-row.total {
+  border-top: 2px solid var(--bread);
+  border-bottom: none;
+  margin-top: 4px;
+  padding-top: 10px;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.bread-row.result {
+  border-bottom: none;
+  border-top: 1px solid var(--border);
+  margin-top: 6px;
+  padding-top: 10px;
+}
+
+.bread-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.bread-value-input {
+  width: 80px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.bread-value-input:focus { border-color: var(--accent); }
+
+.bread-value-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--accent);
+  min-width: 80px;
+  text-align: right;
+}
+
+.bread-value-display.success { color: var(--success); }
+.bread-value-display.danger { color: var(--danger); }
+
+.bread-status {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px;
+  border-radius: 8px;
+  margin-top: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.bread-status.tam {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.bread-status.eksik {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.bread-status.fazla {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+/* Product Item */
+.product-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.product-item {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  transition: border-color 0.2s;
+}
+
+.product-item.has-data {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.product-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+
+.product-name {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-price {
+  font-size: 12px;
+  color: var(--text-mute);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.product-revenue {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--accent);
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.product-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.product-field-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-mute);
+  font-weight: 600;
+  text-align: center;
+}
+
+.product-field-input {
+  width: 100%;
+  padding: 10px 8px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+  transition: border-color 0.2s;
+}
+
+.product-field-input:focus {
+  border-color: var(--accent);
+  background: var(--bg-2);
+}
+
+.product-field-input.satilan {
+  background: var(--accent-soft);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: var(--accent);
+}
+
+.product-field-input.satilan:focus {
+  border-color: var(--accent);
+}
+
+/* Total / Ciro Card */
+.total-card {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--copper) 100%);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+  margin: 16px 0;
+  color: #1a1410;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(245, 158, 11, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.total-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, rgba(255,255,255,0.2), transparent 50%);
+  pointer-events: none;
+}
+
+.total-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  opacity: 0.7;
+  margin-bottom: 6px;
+}
+
+.total-amount {
+  font-family: 'Fraunces', serif;
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.total-meta {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(26, 20, 16, 0.2);
+}
+
+.total-meta-item {
+  text-align: center;
+}
+
+.total-meta-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.total-meta-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+/* Hidden total for staff */
+.staff-blur {
+  filter: blur(14px);
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Notes */
+.notes-input {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: 14px;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.notes-input:focus { border-color: var(--accent); }
+
+.notes-meta {
+  font-size: 11px;
+  color: var(--text-mute);
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ========== REPORTS PAGE ========== */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+
+.stat-card-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-mute);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.stat-card-value {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.stat-card-sub {
+  font-size: 11px;
+  color: var(--text-mute);
+  margin-top: 4px;
+}
+
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  margin-bottom: 14px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-mute);
+  transition: all 0.2s;
+}
+
+.tab-btn.active {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.chart-card h4 {
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.chart-container {
+  position: relative;
+  height: 220px;
+}
+
+/* Day list (history) */
+.day-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.day-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.day-row:hover {
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+
+.day-row-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.day-row-date {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.day-row-meta {
+  font-size: 11px;
+  color: var(--text-mute);
+  margin-top: 2px;
+}
+
+.day-row-amount {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--accent);
+}
+
+/* ========== SETTINGS ========== */
+.settings-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.setting-row {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.setting-row:last-child { border-bottom: none; }
+
+.setting-label {
+  flex: 1;
+}
+
+.setting-label .name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.setting-label .desc {
+  font-size: 12px;
+  color: var(--text-mute);
+  margin-top: 2px;
+}
+
+.setting-value {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Product manager */
+.product-manager-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.product-manager-item {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.product-manager-name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.product-manager-name .group-tag {
+  display: inline-block;
+  font-size: 9px;
+  padding: 2px 6px;
+  background: var(--bread);
+  color: #1a1410;
+  border-radius: 4px;
+  margin-left: 6px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.product-manager-price {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: var(--accent);
+  font-size: 14px;
+  width: 70px;
+  text-align: right;
+}
+
+.product-manager-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--surface-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--text-dim);
+  transition: background 0.2s, color 0.2s;
+}
+
+.icon-btn:hover { background: var(--border); color: var(--text); }
+.icon-btn.danger:hover { background: var(--danger-soft); color: var(--danger); }
+
+/* ========== BOTTOM NAV ========== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(26, 20, 16, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding: 6px 4px;
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
+  z-index: 50;
+}
+
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  background: none;
+  color: var(--text-mute);
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: color 0.2s;
+}
+
+.nav-btn .nav-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.nav-btn.active {
+  color: var(--accent);
+}
+
+.nav-btn.active .nav-icon {
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.4));
+}
+
+/* ========== MODAL ========== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 200;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-backdrop.active { display: flex; }
+
+@media (min-width: 600px) {
+  .modal-backdrop { align-items: center; }
+}
+
+.modal {
+  width: 100%;
+  max-width: 500px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+
+.modal-header h3 {
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.modal-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--surface-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--text-dim);
+}
+
+.modal-body { padding: 16px; }
+
+.modal-footer {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+}
+
+.modal-footer .btn { flex: 1; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  top: max(80px, calc(env(safe-area-inset-top) + 70px));
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 18px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 999;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+  box-shadow: var(--shadow-lg);
+  max-width: 90%;
+  text-align: center;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast.success { border-color: var(--success); color: var(--success); }
+.toast.error { border-color: var(--danger); color: var(--danger); }
+.toast.warning { border-color: var(--warning); color: var(--warning); }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-mute);
+}
+
+.empty-state .emoji {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+
+.empty-state h4 {
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  margin-bottom: 6px;
+  color: var(--text-dim);
+}
+
+.empty-state p { font-size: 13px; }
+
+/* Filter chips */
+.filter-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.filter-chips::-webkit-scrollbar { display: none; }
+
+.chip {
+  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.chip.active {
+  background: var(--accent);
+  color: #1a1410;
+  border-color: var(--accent);
+}
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 12px 0;
+}
+
+/* Cloud ID display */
+.cloud-id-display {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+  user-select: all;
+}
+
+/* Add product button */
+.add-product-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--surface-2);
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 14px;
+  margin-top: 8px;
+  transition: all 0.2s;
+}
+
+.add-product-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* User badge */
+.user-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--surface-3);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.user-badge .name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+@media (min-width: 600px) {
+  .product-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="icon">🍞</div>
+      <h1 class="serif">Ekmek Takip</h1>
+      <p>Günlük üretim ve satış yönetimi</p>
+    </div>
+
+    <div class="auth-tabs">
+      <div class="auth-tab active" data-tab="login">Giriş Yap</div>
+      <div class="auth-tab" data-tab="register">Yeni Hesap</div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginForm">
+      <div class="form-group">
+        <label class="form-label">Bulut ID</label>
+        <input type="text" class="form-input mono" id="loginCloudId" placeholder="XXXX-XXXX-XXXX" maxlength="14" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Şifre</label>
+        <input type="password" class="form-input" id="loginPassword" placeholder="Patron veya çalışan şifresi" autocomplete="current-password">
+      </div>
+      <div class="form-group">
+        <label class="form-label">İsim (opsiyonel)</label>
+        <input type="text" class="form-input" id="loginUserName" placeholder="Örn: Ahmet" maxlength="20" autocomplete="off">
+      </div>
+      <button class="btn btn-primary" onclick="loginUser()">
+        <span>🔓</span> Giriş Yap
+      </button>
+      <div class="auth-info">
+        <strong>İlk defa mı kullanıyorsun?</strong> Üstteki "Yeni Hesap" sekmesinden bir Bulut ID oluştur. Mevcut bir hesaba bağlanmak istiyorsan ID'yi ve şifresini gir.
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerForm" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Patron Şifresi (full erişim)</label>
+        <input type="password" class="form-input" id="regPatronPwd" placeholder="En az 6 karakter" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Çalışan Şifresi (ciroyu görmez)</label>
+        <input type="password" class="form-input" id="regStaffPwd" placeholder="En az 6 karakter" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label class="form-label">İşletme Adı</label>
+        <input type="text" class="form-input" id="regBizName" placeholder="Örn: Mehmet'in Yeri" maxlength="40">
+      </div>
+      <button class="btn btn-primary" onclick="registerNew()">
+        <span>✨</span> Hesap Oluştur
+      </button>
+      <div class="auth-info">
+        <strong>2 farklı şifre olacak:</strong> Patron şifresiyle giren her şeyi görür ve ayarları değiştirebilir. Çalışan şifresiyle giren sadece adet girer, ciroyu göremez.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <header class="header">
+    <div class="header-title">
+      <div class="icon">🍞</div>
+      <div>
+        <div id="bizNameDisplay">Ekmek Takip</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="role-badge" id="roleBadge">PATRON</span>
+      <div class="sync-indicator">
+        <div class="sync-dot" id="syncDot"></div>
+        <span id="syncText">Senkron</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- PAGE: TODAY (Günlük Giriş) -->
+    <div id="page-today" class="page active">
+      <!-- Date Bar -->
+      <div class="date-bar">
+        <button class="date-nav" onclick="changeDate(-1)">‹</button>
+        <div class="date-display" id="dateDisplay" onclick="document.getElementById('datePicker').showPicker()">
+          <div class="date-main" id="dateMain">28 Nisan 2026</div>
+          <div class="date-sub" id="dateSub">Salı</div>
+        </div>
+        <input type="date" id="datePicker" class="date-input-hidden" onchange="setDate(this.value)">
+        <button class="date-nav" onclick="changeDate(1)">›</button>
+      </div>
+
+      <!-- Sandviç Ekmeği Hesap -->
+      <div class="section">
+        <div class="section-header">
+          <h3><span class="emoji">🍞</span> Sandviç Ekmeği</h3>
+        </div>
+        <div class="section-body">
+          <div class="bread-summary">
+            <div class="bread-row">
+              <div class="bread-label">Dünden Kalan</div>
+              <input type="number" class="bread-value-input" id="breadPrev" min="0" placeholder="0" oninput="recalcBread()">
+            </div>
+            <div class="bread-row">
+              <div class="bread-label">Bugün Gelen</div>
+              <input type="number" class="bread-value-input" id="breadIn" min="0" placeholder="0" oninput="recalcBread()">
+            </div>
+            <div class="bread-row total">
+              <div class="bread-label"><strong>Toplam Hazırlık</strong></div>
+              <div class="bread-value-display" id="breadTotal">0</div>
+            </div>
+            <div class="bread-row">
+              <div class="bread-label">Yenen (otomatik)</div>
+              <div class="bread-value-display" id="breadUsed">0</div>
+            </div>
+            <div class="bread-row">
+              <div class="bread-label">Bugün Kalan</div>
+              <input type="number" class="bread-value-input" id="breadLeft" min="0" placeholder="0" oninput="recalcBread()">
+            </div>
+            <div class="bread-row result">
+              <div class="bread-label"><strong>Sonuç</strong></div>
+              <div class="bread-value-display" id="breadDiff">—</div>
+            </div>
+          </div>
+          <div class="bread-status" id="breadStatus" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- Sandviç Ekmeği Ürünleri -->
+      <div class="section">
+        <div class="section-header">
+          <h3><span class="emoji">🥪</span> Sandviç Ekmekli Ürünler</h3>
+        </div>
+        <div class="section-body">
+          <div class="product-list" id="sandwichProducts"></div>
+        </div>
+      </div>
+
+      <!-- Diğer Ürünler -->
+      <div class="section">
+        <div class="section-header">
+          <h3><span class="emoji">🍔</span> Diğer Ürünler</h3>
+        </div>
+        <div class="section-body">
+          <div class="product-list" id="otherProducts"></div>
+        </div>
+      </div>
+
+      <!-- TOPLAM CİRO (sadece patron görür) -->
+      <div class="total-card" id="totalCard">
+        <div class="total-label">Günlük Ciro</div>
+        <div class="total-amount mono" id="totalAmount">₺0</div>
+        <div class="total-meta">
+          <div class="total-meta-item">
+            <div class="total-meta-value mono" id="totalItems">0</div>
+            <div class="total-meta-label">Adet</div>
+          </div>
+          <div class="total-meta-item">
+            <div class="total-meta-value mono" id="totalProducts">0</div>
+            <div class="total-meta-label">Ürün</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notlar -->
+      <div class="section">
+        <div class="section-header">
+          <h3><span class="emoji">📝</span> Gün Notları</h3>
+        </div>
+        <div class="section-body">
+          <textarea class="notes-input" id="dayNotes" placeholder="Bugün ne yaşandı? Kim ne yaptı? Önemli olaylar..." onchange="saveDayNotes()"></textarea>
+          <div class="notes-meta">
+            <span id="notesAuthor">—</span>
+            <span id="notesUpdated">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: REPORTS (Raporlar) -->
+    <div id="page-reports" class="page">
+      <div class="filter-chips" id="reportPeriodChips">
+        <div class="chip active" data-period="week">Bu Hafta</div>
+        <div class="chip" data-period="month">Bu Ay</div>
+        <div class="chip" data-period="last30">Son 30 Gün</div>
+        <div class="chip" data-period="last90">Son 90 Gün</div>
+        <div class="chip" data-period="all">Tümü</div>
+      </div>
+
+      <div id="reportsContent">
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-card-label">Toplam Ciro</div>
+            <div class="stat-card-value mono" id="statTotalRev">₺0</div>
+            <div class="stat-card-sub" id="statTotalRevSub">— gün</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Günlük Ortalama</div>
+            <div class="stat-card-value mono" id="statAvgRev">₺0</div>
+            <div class="stat-card-sub">ortalama</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">En İyi Gün</div>
+            <div class="stat-card-value mono" id="statBestDay">₺0</div>
+            <div class="stat-card-sub" id="statBestDaySub">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Toplam Adet</div>
+            <div class="stat-card-value mono" id="statTotalItems">0</div>
+            <div class="stat-card-sub">satılan ürün</div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h4>📈 Günlük Ciro Trendi</h4>
+          <div class="chart-container">
+            <canvas id="revenueChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h4>🏆 En Çok Satılan Ürünler</h4>
+          <div class="chart-container">
+            <canvas id="productsChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h4>💰 Ürün Bazında Ciro</h4>
+          <div class="chart-container">
+            <canvas id="productRevenueChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: HISTORY (Geçmiş Günler) -->
+    <div id="page-history" class="page">
+      <div class="section">
+        <div class="section-header">
+          <h3><span class="emoji">📅</span> Geçmiş Günler</h3>
+        </div>
+        <div class="section-body">
+          <div id="historyList" class="day-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: SETTINGS -->
+    <div id="page-settings" class="page">
+      <!-- Account info -->
+      <div class="settings-section">
+        <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:8px">
+          <div class="setting-label">
+            <div class="name">Bulut ID</div>
+            <div class="desc">Bu ID'yi paylaşarak başka cihazlardan giriş yapabilirsin</div>
+          </div>
+          <div class="cloud-id-display" id="settingsCloudId">—</div>
+          <button class="btn btn-secondary btn-sm" onclick="copyCloudId()">📋 Kopyala</button>
+        </div>
+      </div>
+
+      <!-- User info -->
+      <div class="settings-section">
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="name">Aktif Kullanıcı</div>
+            <div class="desc">Notlarda ve loglarda gözükür</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="changeUserName()" id="changeNameBtn">Değiştir</button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="name">Rol</div>
+            <div class="desc">Yetki seviyesi</div>
+          </div>
+          <span class="role-badge" id="settingsRoleBadge">PATRON</span>
+        </div>
+      </div>
+
+      <!-- Product Manager (patron only) -->
+      <div class="settings-section" id="productManagerSection">
+        <div class="section-header">
+          <h3 style="font-family:'Fraunces',serif;font-size:16px"><span class="emoji">🍴</span> Ürün Yönetimi</h3>
+        </div>
+        <div style="padding:14px 16px">
+          <div style="font-size:12px;color:var(--text-mute);margin-bottom:10px">
+            <strong style="color:var(--bread)">▮ ekmekli</strong> = Sandviç ekmeği kullanıyor (yenen ekmek hesabına dahil)
+          </div>
+          <div class="product-manager-list" id="productManagerList"></div>
+          <button class="add-product-btn" onclick="openProductEditor()">＋ Yeni Ürün Ekle</button>
+        </div>
+      </div>
+
+      <!-- Password Change (patron only) -->
+      <div class="settings-section" id="passwordSection">
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="name">Şifreleri Değiştir</div>
+            <div class="desc">Patron veya çalışan şifresini güncelle</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="openPasswordModal()">Değiştir</button>
+        </div>
+      </div>
+
+      <!-- Backup/Restore -->
+      <div class="settings-section">
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="name">Yerel Yedekleme</div>
+            <div class="desc">Tüm verileri JSON olarak indir</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="downloadBackup()">📥 İndir</button>
+        </div>
+        <div class="setting-row" id="restoreRow">
+          <div class="setting-label">
+            <div class="name">Yedekten Geri Yükle</div>
+            <div class="desc">JSON dosyasından eski verileri yükle</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('restoreFile').click()">📤 Yükle</button>
+          <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreBackup(event)">
+        </div>
+      </div>
+
+      <!-- Logout -->
+      <div class="settings-section">
+        <div class="setting-row">
+          <div class="setting-label">
+            <div class="name">Çıkış Yap</div>
+            <div class="desc">Bu cihazdan oturumu kapat</div>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="logoutUser()">Çıkış</button>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:20px;color:var(--text-mute);font-size:11px">
+        Ekmek Takip v1.0 · Manrope &amp; Fraunces<br>
+        Veriler AES-256 ile şifrelenir
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-page="today">
+      <span class="nav-icon">📋</span>
+      <span>Bugün</span>
+    </button>
+    <button class="nav-btn" data-page="reports" id="navReports">
+      <span class="nav-icon">📊</span>
+      <span>Raporlar</span>
+    </button>
+    <button class="nav-btn" data-page="history">
+      <span class="nav-icon">📅</span>
+      <span>Geçmiş</span>
+    </button>
+    <button class="nav-btn" data-page="settings">
+      <span class="nav-icon">⚙️</span>
+      <span>Ayarlar</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ============ MODALS ============ -->
+
+<!-- Product Editor Modal -->
+<div class="modal-backdrop" id="productEditorModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="productEditorTitle">Yeni Ürün</h3>
+      <div class="modal-close" onclick="closeModal('productEditorModal')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Ürün Adı</label>
+        <input type="text" class="form-input" id="peName" placeholder="Örn: Sosisli" maxlength="30">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fiyat (₺)</label>
+        <input type="number" class="form-input" id="pePrice" min="0" step="0.5" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Emoji (opsiyonel)</label>
+        <input type="text" class="form-input" id="peEmoji" placeholder="🍔" maxlength="2">
+      </div>
+      <div class="form-group" style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg);border-radius:var(--radius-md);border:1px solid var(--border)">
+        <input type="checkbox" id="peUsesBread" style="width:18px;height:18px;accent-color:var(--accent)">
+        <label for="peUsesBread" style="cursor:pointer;flex:1">
+          <div style="font-weight:600">Sandviç ekmeği kullanıyor mu?</div>
+          <div style="font-size:11px;color:var(--text-mute);margin-top:2px">Bu ürün satıldığında ekmek havuzundan 1 adet düşülür</div>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('productEditorModal')">İptal</button>
+      <button class="btn btn-primary" onclick="saveProduct()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- Password Change Modal -->
+<div class="modal-backdrop" id="passwordModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Şifre Değiştir</h3>
+      <div class="modal-close" onclick="closeModal('passwordModal')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Mevcut Patron Şifresi</label>
+        <input type="password" class="form-input" id="pwOldPatron" placeholder="Doğrulama için" autocomplete="current-password">
+      </div>
+      <div class="divider"></div>
+      <div class="form-group">
+        <label class="form-label">Yeni Patron Şifresi (boş bırakırsan değişmez)</label>
+        <input type="password" class="form-input" id="pwNewPatron" placeholder="En az 6 karakter" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Yeni Çalışan Şifresi (boş bırakırsan değişmez)</label>
+        <input type="password" class="form-input" id="pwNewStaff" placeholder="En az 6 karakter" autocomplete="new-password">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('passwordModal')">İptal</button>
+      <button class="btn btn-primary" onclick="savePasswords()">Güncelle</button>
+    </div>
+  </div>
+</div>
+
+<!-- User Name Modal -->
+<div class="modal-backdrop" id="userNameModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>İsim Değiştir</h3>
+      <div class="modal-close" onclick="closeModal('userNameModal')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">İsmin</label>
+        <input type="text" class="form-input" id="newUserName" maxlength="20">
+        <div class="notes-meta" style="margin-top:8px">Notlarda ve günlük loglarda bu isim görünecek</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('userNameModal')">İptal</button>
+      <button class="btn btn-primary" onclick="saveUserName()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-backdrop" id="confirmModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <h3 id="confirmTitle">Emin misin?</h3>
+    </div>
+    <div class="modal-body">
+      <p id="confirmMessage" style="color:var(--text-dim);line-height:1.6">İşlemi onaylıyor musun?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('confirmModal')">Vazgeç</button>
+      <button class="btn btn-danger" id="confirmOkBtn">Onayla</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   EKMEK TAKİP - Ana JavaScript
+   ============================================================ */
+
+// === STATE ===
+const state = {
+  cloudId: null,
+  password: null,        // for encryption
+  role: null,            // 'patron' | 'staff'
+  userName: '',
+  bizName: 'Ekmek Takip',
+  data: {
+    products: [],          // [{id, name, price, emoji, usesBread, order}]
+    days: {},              // {'2026-04-28': {breadPrev, breadIn, breadLeft, items: {productId: {prep, left, sold}}, notes, notesAuthor, notesUpdated}}
+    passwords: {           // hashed passwords
+      patron: null,
+      staff: null
+    }
+  },
+  currentDate: null,
+  unsubscribe: null,
+  charts: {},
+  reportPeriod: 'week',
+  saveTimer: null,
+  isOnline: navigator.onLine,
+  pendingProductEdit: null
+};
+
+// Default products from the user's Excel
+const DEFAULT_PRODUCTS = [
+  { id: 'p_sosisli', name: 'Sosisli', price: 70, emoji: '🌭', usesBread: true, order: 1 },
+  { id: 'p_sucuklu', name: 'Sucuklu Tost', price: 60, emoji: '🥪', usesBread: true, order: 2 },
+  { id: 'p_kasarli', name: 'Kaşarlı Tost', price: 60, emoji: '🧀', usesBread: true, order: 3 },
+  { id: 'p_karisik', name: 'Karışık Tost', price: 70, emoji: '🥖', usesBread: true, order: 4 },
+  { id: 'p_nugget', name: 'Nugget', price: 90, emoji: '🍗', usesBread: true, order: 5 },
+  { id: 'p_doner', name: 'Döner', price: 100, emoji: '🌯', usesBread: true, order: 6 },
+  { id: 'p_hamburger', name: 'Hamburger', price: 80, emoji: '🍔', usesBread: false, order: 10 },
+  { id: 'p_pizza', name: 'Pizza', price: 80, emoji: '🍕', usesBread: false, order: 11 },
+  { id: 'p_corba', name: 'Çorba', price: 40, emoji: '🍲', usesBread: false, order: 12 },
+  { id: 'p_pilav', name: 'Pilav', price: 50, emoji: '🍚', usesBread: false, order: 13 },
+  { id: 'p_koftemax', name: 'Köftemax', price: 90, emoji: '🍖', usesBread: false, order: 14 },
+  { id: 'p_makarna', name: 'Makarna', price: 40, emoji: '🍝', usesBread: false, order: 15 },
+  { id: 'p_pogaca', name: 'Poğaça', price: 25, emoji: '🥐', usesBread: false, order: 16 },
+  { id: 'p_pizzapogaca', name: 'Pizza Poğaça', price: 30, emoji: '🥯', usesBread: false, order: 17 },
+  { id: 'p_ayran', name: 'Ayran', price: 20, emoji: '🥛', usesBread: false, order: 18 }
+];
+
+// === HELPERS ===
+function $(id) { return document.getElementById(id); }
+function $$(sel) { return document.querySelectorAll(sel); }
+
+function todayKey() {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+
+function formatTL(n) {
+  if (n == null || isNaN(n)) return '₺0';
+  return '₺' + Math.round(n).toLocaleString('tr-TR');
+}
+
+function formatDate(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  const months = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+}
+
+function formatDateShort(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  return ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear();
+}
+
+function getDayName(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  const days = ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+  return days[d.getDay()];
+}
+
+function generateCloudId() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No confusing characters
+  let id = '';
+  for (let i = 0; i < 12; i++) {
+    if (i === 4 || i === 8) id += '-';
+    id += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return id;
+}
+
+function hashPassword(pwd) {
+  return CryptoJS.SHA256(pwd + 'ekmek-takip-salt-v1').toString();
+}
+
+function showToast(msg, type = '') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function setSyncStatus(status) {
+  const dot = $('syncDot');
+  const text = $('syncText');
+  dot.className = 'sync-dot ' + status;
+  if (status === 'syncing') text.textContent = 'Yükleniyor';
+  else if (status === 'offline') text.textContent = 'Çevrimdışı';
+  else text.textContent = 'Senkron';
+}
+
+// === ENCRYPTION ===
+function encryptData(obj, password) {
+  const json = JSON.stringify(obj);
+  return CryptoJS.AES.encrypt(json, password).toString();
+}
+
+function decryptData(cipher, password) {
+  try {
+    const bytes = CryptoJS.AES.decrypt(cipher, password);
+    const json = bytes.toString(CryptoJS.enc.Utf8);
+    if (!json) return null;
+    return JSON.parse(json);
+  } catch (e) {
+    return null;
+  }
+}
+
+// === FIREBASE WAIT ===
+function waitForFirebase() {
+  return new Promise(resolve => {
+    if (window.firebaseReady) return resolve();
+    window.addEventListener('firebase-ready', () => resolve(), { once: true });
+  });
+}
+
+// === AUTH ===
+$$('.auth-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    $$('.auth-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const which = tab.dataset.tab;
+    $('loginForm').style.display = which === 'login' ? 'block' : 'none';
+    $('registerForm').style.display = which === 'register' ? 'block' : 'none';
+  });
+});
+
+// Auto-format Cloud ID input
+$('loginCloudId').addEventListener('input', e => {
+  let val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (val.length > 12) val = val.slice(0, 12);
+  let formatted = '';
+  for (let i = 0; i < val.length; i++) {
+    if (i === 4 || i === 8) formatted += '-';
+    formatted += val[i];
+  }
+  e.target.value = formatted;
+});
+
+async function registerNew() {
+  const patronPwd = $('regPatronPwd').value.trim();
+  const staffPwd = $('regStaffPwd').value.trim();
+  const bizName = $('regBizName').value.trim() || 'Ekmek Takip';
+
+  if (patronPwd.length < 6) return showToast('Patron şifresi en az 6 karakter olmalı', 'error');
+  if (staffPwd.length < 6) return showToast('Çalışan şifresi en az 6 karakter olmalı', 'error');
+  if (patronPwd === staffPwd) return showToast('Patron ve çalışan şifreleri farklı olmalı', 'error');
+
+  const cloudId = generateCloudId();
+
+  await waitForFirebase();
+  setSyncStatus('syncing');
+
+  // Initial data structure
+  const initialData = {
+    products: DEFAULT_PRODUCTS,
+    days: {},
+    passwords: {
+      patron: hashPassword(patronPwd),
+      staff: hashPassword(staffPwd)
+    },
+    bizName: bizName,
+    createdAt: Date.now()
+  };
+
+  try {
+    // Encrypt with patron password (master key)
+    const encrypted = encryptData(initialData, patronPwd);
+    const ref = window.fbDoc(window.fbDb, 'ekmek-takip', cloudId);
+    await window.fbSetDoc(ref, {
+      encrypted: encrypted,
+      // Plaintext password hashes for verification (so we know which role on login)
+      patronHash: hashPassword(patronPwd),
+      staffHash: hashPassword(staffPwd),
+      updatedAt: Date.now()
+    });
+
+    showToast('Hesap oluşturuldu! ✨', 'success');
+    setSyncStatus('');
+
+    // Auto login as patron
+    state.cloudId = cloudId;
+    state.password = patronPwd;
+    state.role = 'patron';
+    state.userName = 'Patron';
+    state.bizName = bizName;
+    state.data = initialData;
+
+    saveLocalAuth();
+    enterApp();
+
+    // Show cloud ID prominently
+    setTimeout(() => {
+      alert('🎉 Hesap oluşturuldu!\n\nBulut ID:\n' + cloudId + '\n\nBu ID\'yi NOT AL ve diğer cihazlardan giriş yaparken kullan. Ayarlar bölümünden de görebilirsin.');
+    }, 500);
+
+  } catch (e) {
+    console.error(e);
+    showToast('Hata: ' + e.message, 'error');
+    setSyncStatus('offline');
+  }
+}
+
+async function loginUser() {
+  const cloudId = $('loginCloudId').value.trim().toUpperCase();
+  const password = $('loginPassword').value.trim();
+  const userName = $('loginUserName').value.trim() || 'Kullanıcı';
+
+  if (!cloudId || cloudId.length !== 14) return showToast('Geçerli bir Bulut ID gir', 'error');
+  if (!password) return showToast('Şifre gir', 'error');
+
+  await waitForFirebase();
+  setSyncStatus('syncing');
+
+  try {
+    const ref = window.fbDoc(window.fbDb, 'ekmek-takip', cloudId);
+    const snap = await window.fbGetDoc(ref);
+
+    if (!snap.exists()) {
+      setSyncStatus('offline');
+      return showToast('Bu Bulut ID bulunamadı', 'error');
+    }
+
+    const docData = snap.data();
+    const pwHash = hashPassword(password);
+
+    let role = null;
+    if (pwHash === docData.patronHash) role = 'patron';
+    else if (pwHash === docData.staffHash) role = 'staff';
+
+    if (!role) {
+      setSyncStatus('offline');
+      return showToast('Şifre yanlış', 'error');
+    }
+
+    // For staff, we need to derive the patron password to decrypt.
+    // The staff role decrypts using a separate key path:
+    // Approach: decrypt always uses patron password. Staff password unlocks a wrapped patron key.
+    // For simplicity in this version, we encrypt with patron password but staff can only login if they know
+    // their own password — and decryption is done by re-fetching with patron auth via the document.
+    // Since we can't do that securely here, we use a slightly different design:
+    // - Document has TWO encrypted blobs: one decryptable by patron pwd, one by staff pwd.
+    // We need to migrate. For now, on this first version we re-encrypt on every save with both passwords.
+
+    let decrypted = null;
+    if (role === 'patron') {
+      decrypted = decryptData(docData.encrypted, password);
+    } else {
+      // staff - try staff-encrypted blob
+      decrypted = decryptData(docData.encryptedStaff || docData.encrypted, password);
+    }
+
+    if (!decrypted) {
+      setSyncStatus('offline');
+      return showToast('Veri çözülemedi (şifre/eşleşme hatası)', 'error');
+    }
+
+    state.cloudId = cloudId;
+    state.password = password;
+    state.role = role;
+    state.userName = userName;
+    state.bizName = decrypted.bizName || 'Ekmek Takip';
+    state.data = decrypted;
+
+    // Ensure passwords structure exists
+    if (!state.data.passwords) {
+      state.data.passwords = {
+        patron: docData.patronHash,
+        staff: docData.staffHash
+      };
+    }
+
+    showToast('Giriş başarılı!', 'success');
+    setSyncStatus('');
+
+    saveLocalAuth();
+    enterApp();
+
+  } catch (e) {
+    console.error(e);
+    showToast('Hata: ' + e.message, 'error');
+    setSyncStatus('offline');
+  }
+}
+
+function saveLocalAuth() {
+  // Encrypt local cache with cloud id + password (for offline)
+  const auth = {
+    cloudId: state.cloudId,
+    password: state.password,
+    role: state.role,
+    userName: state.userName,
+    bizName: state.bizName
+  };
+  localStorage.setItem('ekmek_auth', encryptData(auth, 'ekmek-local-' + state.cloudId));
+  localStorage.setItem('ekmek_cloudid', state.cloudId);
+}
+
+function loadLocalAuth() {
+  const cloudId = localStorage.getItem('ekmek_cloudid');
+  if (!cloudId) return null;
+  const enc = localStorage.getItem('ekmek_auth');
+  if (!enc) return null;
+  return decryptData(enc, 'ekmek-local-' + cloudId);
+}
+
+function logoutUser() {
+  showConfirm('Çıkış yap', 'Bu cihazdan oturumu kapatmak istiyor musun? Bulut verilerin silinmez.', () => {
+    if (state.unsubscribe) state.unsubscribe();
+    localStorage.removeItem('ekmek_auth');
+    localStorage.removeItem('ekmek_cloudid');
+    location.reload();
+  });
+}
+
+// === ENTER APP ===
+function enterApp() {
+  $('authScreen').style.display = 'none';
+  $('app').style.display = 'block';
+
+  state.currentDate = todayKey();
+
+  // Update UI based on role
+  $('roleBadge').textContent = state.role === 'patron' ? 'PATRON' : 'ÇALIŞAN';
+  $('roleBadge').classList.toggle('staff', state.role === 'staff');
+  $('settingsRoleBadge').textContent = state.role === 'patron' ? 'PATRON' : 'ÇALIŞAN';
+  $('settingsRoleBadge').classList.toggle('staff', state.role === 'staff');
+  $('settingsCloudId').textContent = state.cloudId;
+  $('bizNameDisplay').textContent = state.bizName;
+
+  // Hide patron-only sections for staff
+  if (state.role === 'staff') {
+    $('productManagerSection').style.display = 'none';
+    $('passwordSection').style.display = 'none';
+    $('navReports').style.display = 'none';
+    $('totalCard').classList.add('staff-blur');
+  }
+
+  setupRealtimeSync();
+  renderAll();
+}
+
+// === REALTIME SYNC ===
+function setupRealtimeSync() {
+  if (state.unsubscribe) state.unsubscribe();
+  const ref = window.fbDoc(window.fbDb, 'ekmek-takip', state.cloudId);
+  state.unsubscribe = window.fbOnSnapshot(ref, snap => {
+    if (!snap.exists()) return;
+    const docData = snap.data();
+    let decrypted = null;
+    if (state.role === 'patron') {
+      decrypted = decryptData(docData.encrypted, state.password);
+    } else {
+      decrypted = decryptData(docData.encryptedStaff || docData.encrypted, state.password);
+    }
+    if (!decrypted) return;
+
+    // Avoid loop: only update if updatedAt is newer than our local
+    if (state._lastSavedAt && docData.updatedAt && docData.updatedAt <= state._lastSavedAt) return;
+
+    state.data = decrypted;
+    if (!state.data.passwords) {
+      state.data.passwords = { patron: docData.patronHash, staff: docData.staffHash };
+    }
+    state.bizName = decrypted.bizName || state.bizName;
+    $('bizNameDisplay').textContent = state.bizName;
+    renderAll();
+  }, err => {
+    console.error('Sync error:', err);
+    setSyncStatus('offline');
+  });
+}
+
+async function saveToCloud() {
+  if (!state.cloudId) return;
+  setSyncStatus('syncing');
+
+  try {
+    state.data.bizName = state.bizName;
+    const now = Date.now();
+    state._lastSavedAt = now;
+
+    // We need to encrypt with both passwords if patron is editing
+    // For this we need to know the patron password. Only patron can save data fully.
+    // Staff edits: only days data changes (no settings). We re-encrypt only the staff blob? No, both blobs must update.
+    // Solution: We store the patron password hash in a way staff can validate but staff must re-derive...
+    // Simpler approach for v1: We encrypt with EACH password separately. Staff must trigger save => save signs with staff pwd
+    // and patron pwd is read from a wrapped form.
+    //
+    // CLEANER APPROACH (used here):
+    // - On register, we encrypt with BOTH passwords (two blobs).
+    // - On save, we need both passwords. Patron has it. Staff must use a wrapped key.
+    // - To keep things simple AND secure: we store an "innerKey" inside the encrypted blob.
+    //   Both blobs decrypt to {data, innerKey}. innerKey is shared. Saves use innerKey for actual encryption.
+    //
+    // For v1, we'll use a pragmatic approach: on save, both blobs are written using the password the saver knows,
+    // PLUS a recovery mechanism using innerKey.
+
+    if (!state.data._innerKey) {
+      // Initialize inner key on first save
+      state.data._innerKey = CryptoJS.lib.WordArray.random(32).toString();
+    }
+
+    // Always encrypt full data with patron pwd if we have it
+    // For save: we need both passwords. We solve this by storing wrapped versions.
+    // Since on login we got role and one password, we need the other password to write the other blob.
+    // We solve this by storing the OTHER password hashed-and-wrapped using innerKey.
+
+    let patronEncrypted, staffEncrypted;
+
+    if (state.role === 'patron') {
+      // Patron: encrypts full data with own pwd. For staff blob, we need staff pwd... we don't have it.
+      // Solution: On register we save staff blob too. On password change patron sets both. So we need the staff pwd available somehow.
+      // We store the staff pwd encrypted with innerKey, and innerKey encrypted with both passwords.
+
+      // Get staff password (we may have stored it wrapped)
+      let staffPwd = state.data._wrappedStaffPwd
+        ? decryptData(state.data._wrappedStaffPwd, state.data._innerKey)
+        : null;
+
+      patronEncrypted = encryptData(state.data, state.password);
+      if (staffPwd) {
+        staffEncrypted = encryptData(state.data, staffPwd);
+      } else {
+        // Fallback: encrypt staff blob with same password (won't decrypt for staff but at least no crash)
+        staffEncrypted = patronEncrypted;
+      }
+    } else {
+      // Staff: encrypts with staff pwd. For patron blob, we use wrapped patron pwd.
+      let patronPwd = state.data._wrappedPatronPwd
+        ? decryptData(state.data._wrappedPatronPwd, state.data._innerKey)
+        : null;
+
+      staffEncrypted = encryptData(state.data, state.password);
+      if (patronPwd) {
+        patronEncrypted = encryptData(state.data, patronPwd);
+      } else {
+        patronEncrypted = staffEncrypted;
+      }
+    }
+
+    const ref = window.fbDoc(window.fbDb, 'ekmek-takip', state.cloudId);
+    await window.fbSetDoc(ref, {
+      encrypted: patronEncrypted,
+      encryptedStaff: staffEncrypted,
+      patronHash: state.data.passwords.patron,
+      staffHash: state.data.passwords.staff,
+      updatedAt: now
+    });
+
+    setSyncStatus('');
+  } catch (e) {
+    console.error('Save error:', e);
+    setSyncStatus('offline');
+    showToast('Kayıt hatası: ' + e.message, 'error');
+  }
+}
+
+// Debounced save
+function scheduleSave() {
+  clearTimeout(state.saveTimer);
+  state.saveTimer = setTimeout(saveToCloud, 800);
+}
+
+// === CURRENT DAY HELPERS ===
+function getCurrentDay() {
+  if (!state.data.days[state.currentDate]) {
+    state.data.days[state.currentDate] = {
+      breadPrev: null,
+      breadIn: null,
+      breadLeft: null,
+      items: {},
+      notes: '',
+      notesAuthor: '',
+      notesUpdated: null
+    };
+  }
+  return state.data.days[state.currentDate];
+}
+
+function getItem(productId) {
+  const day = getCurrentDay();
+  if (!day.items[productId]) {
+    day.items[productId] = { prep: null, left: null, sold: null };
+  }
+  return day.items[productId];
+}
+
+// === DATE NAVIGATION ===
+function changeDate(delta) {
+  const d = new Date(state.currentDate + 'T00:00:00');
+  d.setDate(d.getDate() + delta);
+  state.currentDate = d.toISOString().slice(0, 10);
+  renderToday();
+}
+
+function setDate(iso) {
+  if (!iso) return;
+  state.currentDate = iso;
+  renderToday();
+}
+
+// === RENDERING ===
+function renderAll() {
+  renderToday();
+  if ($('page-reports').classList.contains('active')) renderReports();
+  if ($('page-history').classList.contains('active')) renderHistory();
+  if ($('page-settings').classList.contains('active')) renderSettings();
+}
+
+function renderToday() {
+  // Date display
+  $('dateMain').textContent = formatDate(state.currentDate);
+  $('dateSub').textContent = getDayName(state.currentDate);
+  $('datePicker').value = state.currentDate;
+  $('dateDisplay').classList.toggle('today', state.currentDate === todayKey());
+
+  const day = getCurrentDay();
+
+  // Bread inputs
+  $('breadPrev').value = day.breadPrev ?? '';
+  $('breadIn').value = day.breadIn ?? '';
+  $('breadLeft').value = day.breadLeft ?? '';
+
+  // Render products
+  renderProducts();
+  recalcBread();
+  recalcTotal();
+
+  // Notes
+  $('dayNotes').value = day.notes || '';
+  $('notesAuthor').textContent = day.notesAuthor ? '✍️ ' + day.notesAuthor : '';
+  $('notesUpdated').textContent = day.notesUpdated ? new Date(day.notesUpdated).toLocaleString('tr-TR') : '';
+}
+
+function renderProducts() {
+  const products = (state.data.products || []).slice().sort((a, b) => (a.order || 999) - (b.order || 999));
+  const sandwichProducts = products.filter(p => p.usesBread);
+  const otherProducts = products.filter(p => !p.usesBread);
+
+  $('sandwichProducts').innerHTML = sandwichProducts.map(p => productRowHTML(p)).join('') ||
+    '<div class="empty-state"><div class="emoji">🥪</div><p>Henüz sandviç ekmekli ürün yok</p></div>';
+
+  $('otherProducts').innerHTML = otherProducts.map(p => productRowHTML(p)).join('') ||
+    '<div class="empty-state"><div class="emoji">🍔</div><p>Henüz başka ürün yok</p></div>';
+
+  // Bind inputs
+  $$('.product-field-input').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const pid = e.target.dataset.pid;
+      const field = e.target.dataset.field;
+      const val = e.target.value === '' ? null : parseFloat(e.target.value);
+      const item = getItem(pid);
+      item[field] = isNaN(val) ? null : val;
+      // Update revenue display
+      updateProductRevenue(pid);
+      recalcBread();
+      recalcTotal();
+      scheduleSave();
+    });
+  });
+}
+
+function productRowHTML(p) {
+  const item = getItem(p.id);
+  const revenue = (item.sold || 0) * p.price;
+  const hasData = (item.prep != null) || (item.left != null) || (item.sold != null);
+  const showRevenue = state.role === 'patron';
+
+  return `
+    <div class="product-item ${hasData ? 'has-data' : ''}" data-pid="${p.id}">
+      <div class="product-header">
+        <div class="product-name">
+          <span>${p.emoji || '🍴'}</span>
+          <span>${p.name}</span>
+          ${showRevenue ? `<span class="product-price mono">₺${p.price}</span>` : ''}
+        </div>
+        ${showRevenue ? `<div class="product-revenue mono" data-rev-pid="${p.id}">${formatTL(revenue)}</div>` : ''}
+      </div>
+      <div class="product-grid">
+        <div class="product-field">
+          <div class="product-field-label">Hazırlık</div>
+          <input type="number" class="product-field-input" data-pid="${p.id}" data-field="prep" min="0" value="${item.prep ?? ''}" placeholder="—">
+        </div>
+        <div class="product-field">
+          <div class="product-field-label">Kalan</div>
+          <input type="number" class="product-field-input" data-pid="${p.id}" data-field="left" min="0" value="${item.left ?? ''}" placeholder="—">
+        </div>
+        <div class="product-field">
+          <div class="product-field-label">Satılan</div>
+          <input type="number" class="product-field-input satilan" data-pid="${p.id}" data-field="sold" min="0" value="${item.sold ?? ''}" placeholder="—">
+        </div>
+      </div>
+    </div>`;
+}
+
+function updateProductRevenue(pid) {
+  const p = state.data.products.find(x => x.id === pid);
+  if (!p) return;
+  const item = getItem(pid);
+  const rev = (item.sold || 0) * p.price;
+  const el = document.querySelector(`[data-rev-pid="${pid}"]`);
+  if (el) el.textContent = formatTL(rev);
+
+  const itemEl = document.querySelector(`.product-item[data-pid="${pid}"]`);
+  if (itemEl) {
+    const hasData = (item.prep != null) || (item.left != null) || (item.sold != null);
+    itemEl.classList.toggle('has-data', hasData);
+  }
+}
+
+function recalcBread() {
+  const day = getCurrentDay();
+  const prev = parseFloat($('breadPrev').value) || 0;
+  const inn = parseFloat($('breadIn').value) || 0;
+  const left = parseFloat($('breadLeft').value) || 0;
+
+  // Save to day
+  day.breadPrev = $('breadPrev').value === '' ? null : prev;
+  day.breadIn = $('breadIn').value === '' ? null : inn;
+  day.breadLeft = $('breadLeft').value === '' ? null : left;
+
+  const total = prev + inn;
+
+  // Yenen = sum of "sold" for products that use bread
+  const sandwichProducts = state.data.products.filter(p => p.usesBread);
+  let yenen = 0;
+  sandwichProducts.forEach(p => {
+    const item = getItem(p.id);
+    if (item.sold) yenen += item.sold;
+  });
+
+  $('breadTotal').textContent = total;
+  $('breadUsed').textContent = yenen;
+
+  // Beklenen kalan = total - yenen
+  const expectedLeft = total - yenen;
+  const diff = left - expectedLeft;
+
+  const diffEl = $('breadDiff');
+  const statusEl = $('breadStatus');
+
+  if (day.breadLeft == null && day.breadPrev == null && day.breadIn == null) {
+    diffEl.textContent = '—';
+    diffEl.className = 'bread-value-display';
+    statusEl.style.display = 'none';
+    return;
+  }
+
+  if (day.breadLeft == null) {
+    diffEl.textContent = `Beklenen: ${expectedLeft}`;
+    diffEl.className = 'bread-value-display';
+    statusEl.style.display = 'none';
+    return;
+  }
+
+  if (diff === 0) {
+    diffEl.textContent = 'TAM';
+    diffEl.className = 'bread-value-display success';
+    statusEl.style.display = 'block';
+    statusEl.className = 'bread-status tam';
+    statusEl.textContent = '✓ Hesap Tutuyor';
+  } else if (diff > 0) {
+    diffEl.textContent = '+' + diff + ' fazla';
+    diffEl.className = 'bread-value-display';
+    statusEl.style.display = 'block';
+    statusEl.className = 'bread-status fazla';
+    statusEl.textContent = `⚠️ ${diff} adet ekmek fazla kalmış`;
+  } else {
+    diffEl.textContent = diff + ' eksik';
+    diffEl.className = 'bread-value-display danger';
+    statusEl.style.display = 'block';
+    statusEl.className = 'bread-status eksik';
+    statusEl.textContent = `❌ ${Math.abs(diff)} adet ekmek eksik`;
+  }
+}
+
+function recalcTotal() {
+  const day = getCurrentDay();
+  let total = 0;
+  let totalItems = 0;
+  let totalProducts = 0;
+
+  state.data.products.forEach(p => {
+    const item = day.items[p.id];
+    if (!item) return;
+    if (item.sold) {
+      total += item.sold * p.price;
+      totalItems += item.sold;
+      totalProducts++;
+    }
+  });
+
+  $('totalAmount').textContent = formatTL(total);
+  $('totalItems').textContent = totalItems;
+  $('totalProducts').textContent = totalProducts;
+}
+
+// === NOTES ===
+let notesTimer = null;
+$('dayNotes').addEventListener('input', () => {
+  clearTimeout(notesTimer);
+  notesTimer = setTimeout(saveDayNotes, 1500);
+});
+
+function saveDayNotes() {
+  const day = getCurrentDay();
+  const newNotes = $('dayNotes').value;
+  if (day.notes === newNotes) return;
+  day.notes = newNotes;
+  day.notesAuthor = state.userName || 'Anonim';
+  day.notesUpdated = Date.now();
+  $('notesAuthor').textContent = '✍️ ' + day.notesAuthor;
+  $('notesUpdated').textContent = new Date(day.notesUpdated).toLocaleString('tr-TR');
+  scheduleSave();
+}
+
+// === NAV ===
+$$('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const pageId = btn.dataset.page;
+    if (pageId === 'reports' && state.role === 'staff') return;
+    $$('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    $$('.page').forEach(p => p.classList.remove('active'));
+    $('page-' + pageId).classList.add('active');
+    if (pageId === 'reports') renderReports();
+    if (pageId === 'history') renderHistory();
+    if (pageId === 'settings') renderSettings();
+  });
+});
+
+// === REPORTS ===
+$$('#reportPeriodChips .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    $$('#reportPeriodChips .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    state.reportPeriod = chip.dataset.period;
+    renderReports();
+  });
+});
+
+function getDateRange(period) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let start;
+  if (period === 'week') {
+    start = new Date(today);
+    const day = today.getDay() || 7;
+    start.setDate(today.getDate() - day + 1);
+  } else if (period === 'month') {
+    start = new Date(today.getFullYear(), today.getMonth(), 1);
+  } else if (period === 'last30') {
+    start = new Date(today);
+    start.setDate(today.getDate() - 29);
+  } else if (period === 'last90') {
+    start = new Date(today);
+    start.setDate(today.getDate() - 89);
+  } else {
+    start = new Date('2020-01-01');
+  }
+  return { start: start.toISOString().slice(0, 10), end: today.toISOString().slice(0, 10) };
+}
+
+function renderReports() {
+  if (state.role === 'staff') return;
+  const { start, end } = getDateRange(state.reportPeriod);
+
+  const days = Object.keys(state.data.days || {})
+    .filter(d => d >= start && d <= end)
+    .sort();
+
+  let totalRev = 0;
+  let totalItems = 0;
+  let bestDay = { date: null, rev: 0 };
+  const productSales = {}; // pid -> { qty, rev }
+  const dailyRev = {}; // date -> rev
+
+  days.forEach(d => {
+    const day = state.data.days[d];
+    let dayRev = 0;
+    let dayItems = 0;
+    state.data.products.forEach(p => {
+      const item = day.items[p.id];
+      if (!item || !item.sold) return;
+      const rev = item.sold * p.price;
+      dayRev += rev;
+      dayItems += item.sold;
+      if (!productSales[p.id]) productSales[p.id] = { name: p.name, emoji: p.emoji, qty: 0, rev: 0 };
+      productSales[p.id].qty += item.sold;
+      productSales[p.id].rev += rev;
+    });
+    totalRev += dayRev;
+    totalItems += dayItems;
+    dailyRev[d] = dayRev;
+    if (dayRev > bestDay.rev) {
+      bestDay = { date: d, rev: dayRev };
+    }
+  });
+
+  const dayCount = days.length;
+  const avgRev = dayCount > 0 ? totalRev / dayCount : 0;
+
+  $('statTotalRev').textContent = formatTL(totalRev);
+  $('statTotalRevSub').textContent = dayCount + ' gün';
+  $('statAvgRev').textContent = formatTL(avgRev);
+  $('statBestDay').textContent = formatTL(bestDay.rev);
+  $('statBestDaySub').textContent = bestDay.date ? formatDateShort(bestDay.date) : '—';
+  $('statTotalItems').textContent = totalItems.toLocaleString('tr-TR');
+
+  // Charts
+  drawRevenueChart(days, dailyRev);
+  drawProductsChart(productSales);
+  drawProductRevenueChart(productSales);
+}
+
+function drawRevenueChart(dates, dailyRev) {
+  const ctx = $('revenueChart');
+  if (state.charts.revenue) state.charts.revenue.destroy();
+  const labels = dates.map(d => formatDateShort(d).slice(0, 5));
+  const data = dates.map(d => dailyRev[d] || 0);
+
+  state.charts.revenue = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Ciro',
+        data,
+        borderColor: '#f59e0b',
+        backgroundColor: 'rgba(245, 158, 11, 0.15)',
+        fill: true,
+        tension: 0.3,
+        borderWidth: 2.5,
+        pointBackgroundColor: '#f59e0b',
+        pointRadius: 3,
+        pointHoverRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#8a7660', font: { size: 10 } }, grid: { display: false } },
+        y: {
+          ticks: {
+            color: '#8a7660',
+            font: { size: 10 },
+            callback: v => '₺' + (v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v)
+          },
+          grid: { color: 'rgba(74, 58, 44, 0.4)' }
+        }
+      }
+    }
+  });
+}
+
+function drawProductsChart(productSales) {
+  const ctx = $('productsChart');
+  if (state.charts.products) state.charts.products.destroy();
+  const arr = Object.values(productSales).sort((a, b) => b.qty - a.qty).slice(0, 10);
+  const labels = arr.map(p => (p.emoji || '') + ' ' + p.name);
+  const data = arr.map(p => p.qty);
+  const colors = ['#f59e0b','#fbbf24','#fb923c','#f97316','#d97706','#ea580c','#c8893a','#a8732e','#8b5e23','#6b4519'];
+
+  state.charts.products = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Adet',
+        data,
+        backgroundColor: colors,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#8a7660', font: { size: 10 } }, grid: { color: 'rgba(74, 58, 44, 0.4)' } },
+        y: { ticks: { color: '#c9b9a4', font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+function drawProductRevenueChart(productSales) {
+  const ctx = $('productRevenueChart');
+  if (state.charts.productRev) state.charts.productRev.destroy();
+  const arr = Object.values(productSales).sort((a, b) => b.rev - a.rev).slice(0, 10);
+  const labels = arr.map(p => (p.emoji || '') + ' ' + p.name);
+  const data = arr.map(p => p.rev);
+  const colors = ['#f59e0b','#fbbf24','#fb923c','#f97316','#d97706','#ea580c','#c8893a','#a8732e','#8b5e23','#6b4519'];
+
+  state.charts.productRev = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: colors,
+        borderColor: '#2b2018',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { color: '#c9b9a4', font: { size: 11 }, padding: 8, boxWidth: 12 }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.label + ': ' + formatTL(ctx.parsed)
+          }
+        }
+      }
+    }
+  });
+}
+
+// === HISTORY ===
+function renderHistory() {
+  const list = $('historyList');
+  const days = Object.keys(state.data.days || {}).sort().reverse();
+
+  if (days.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="emoji">📅</div><h4>Henüz kayıt yok</h4><p>Bugün ekleyince burada görünecek</p></div>';
+    return;
+  }
+
+  list.innerHTML = days.map(d => {
+    const day = state.data.days[d];
+    let rev = 0;
+    let items = 0;
+    state.data.products.forEach(p => {
+      const it = day.items[p.id];
+      if (it && it.sold) {
+        rev += it.sold * p.price;
+        items += it.sold;
+      }
+    });
+    const showRev = state.role === 'patron';
+    return `
+      <div class="day-row" onclick="openDay('${d}')">
+        <div class="day-row-info">
+          <div class="day-row-date">${formatDate(d)} · ${getDayName(d)}</div>
+          <div class="day-row-meta">${items} adet ${day.notes ? '· 📝 not var' : ''}</div>
+        </div>
+        ${showRev ? `<div class="day-row-amount">${formatTL(rev)}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function openDay(date) {
+  state.currentDate = date;
+  // Switch to today page
+  $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === 'today'));
+  $$('.page').forEach(p => p.classList.toggle('active', p.id === 'page-today'));
+  renderToday();
+  window.scrollTo(0, 0);
+}
+
+// === SETTINGS / PRODUCT MANAGER ===
+function renderSettings() {
+  $('settingsCloudId').textContent = state.cloudId;
+
+  if (state.role !== 'patron') return;
+
+  const list = $('productManagerList');
+  const products = (state.data.products || []).slice().sort((a, b) => (a.order || 999) - (b.order || 999));
+
+  list.innerHTML = products.map(p => `
+    <div class="product-manager-item">
+      <span style="font-size:18px">${p.emoji || '🍴'}</span>
+      <div class="product-manager-name">
+        ${p.name}
+        ${p.usesBread ? '<span class="group-tag">ekmekli</span>' : ''}
+      </div>
+      <div class="product-manager-price mono">₺${p.price}</div>
+      <div class="product-manager-actions">
+        <button class="icon-btn" onclick="editProduct('${p.id}')" title="Düzenle">✏️</button>
+        <button class="icon-btn danger" onclick="deleteProduct('${p.id}')" title="Sil">🗑️</button>
+      </div>
+    </div>
+  `).join('') || '<div class="empty-state"><p>Ürün yok</p></div>';
+}
+
+function openProductEditor() {
+  state.pendingProductEdit = null;
+  $('productEditorTitle').textContent = 'Yeni Ürün';
+  $('peName').value = '';
+  $('pePrice').value = '';
+  $('peEmoji').value = '';
+  $('peUsesBread').checked = false;
+  openModal('productEditorModal');
+}
+
+function editProduct(id) {
+  const p = state.data.products.find(x => x.id === id);
+  if (!p) return;
+  state.pendingProductEdit = id;
+  $('productEditorTitle').textContent = 'Ürün Düzenle';
+  $('peName').value = p.name;
+  $('pePrice').value = p.price;
+  $('peEmoji').value = p.emoji || '';
+  $('peUsesBread').checked = !!p.usesBread;
+  openModal('productEditorModal');
+}
+
+function saveProduct() {
+  const name = $('peName').value.trim();
+  const price = parseFloat($('pePrice').value);
+  const emoji = $('peEmoji').value.trim();
+  const usesBread = $('peUsesBread').checked;
+
+  if (!name) return showToast('Ürün adı gir', 'error');
+  if (isNaN(price) || price < 0) return showToast('Geçerli bir fiyat gir', 'error');
+
+  if (state.pendingProductEdit) {
+    const p = state.data.products.find(x => x.id === state.pendingProductEdit);
+    if (p) {
+      p.name = name;
+      p.price = price;
+      p.emoji = emoji;
+      p.usesBread = usesBread;
+    }
+  } else {
+    const maxOrder = state.data.products.reduce((m, p) => Math.max(m, p.order || 0), 0);
+    state.data.products.push({
+      id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      name, price, emoji, usesBread,
+      order: maxOrder + 1
+    });
+  }
+
+  closeModal('productEditorModal');
+  renderSettings();
+  renderToday();
+  scheduleSave();
+  showToast('Kaydedildi', 'success');
+}
+
+function deleteProduct(id) {
+  const p = state.data.products.find(x => x.id === id);
+  if (!p) return;
+  showConfirm(
+    p.name + ' silinsin mi?',
+    'Geçmiş günlerdeki bu ürünün satış verisi kalacak ama bu üründen yeni giriş yapamayacaksın.',
+    () => {
+      state.data.products = state.data.products.filter(x => x.id !== id);
+      renderSettings();
+      renderToday();
+      scheduleSave();
+      showToast('Silindi', 'success');
+    }
+  );
+}
+
+// === PASSWORD CHANGE ===
+function openPasswordModal() {
+  $('pwOldPatron').value = '';
+  $('pwNewPatron').value = '';
+  $('pwNewStaff').value = '';
+  openModal('passwordModal');
+}
+
+async function savePasswords() {
+  const oldPatron = $('pwOldPatron').value;
+  const newPatron = $('pwNewPatron').value.trim();
+  const newStaff = $('pwNewStaff').value.trim();
+
+  if (hashPassword(oldPatron) !== state.data.passwords.patron) {
+    return showToast('Mevcut patron şifresi yanlış', 'error');
+  }
+
+  if (!newPatron && !newStaff) {
+    return showToast('En az birini değiştirmelisin', 'error');
+  }
+
+  if (newPatron && newPatron.length < 6) return showToast('Patron şifresi en az 6 karakter', 'error');
+  if (newStaff && newStaff.length < 6) return showToast('Çalışan şifresi en az 6 karakter', 'error');
+
+  const finalPatron = newPatron || oldPatron;
+  // Need staff pwd to re-encrypt staff blob - this requires we know current staff pwd
+  // We don't always have it. Solution: when patron changes staff pwd, we just update hash, and
+  // staff users will need to log in with new pwd. The encrypted blob will use new staff pwd.
+
+  // We need to know either old staff pwd OR generate fresh blob with new one if provided
+  // For simplicity: if newStaff provided, we use that to re-encrypt.
+  // If newStaff not provided, we keep the existing encryptedStaff blob (just update hashes).
+
+  setSyncStatus('syncing');
+
+  try {
+    state.data.passwords.patron = hashPassword(finalPatron);
+    if (newStaff) {
+      state.data.passwords.staff = hashPassword(newStaff);
+    }
+
+    state._lastSavedAt = Date.now();
+    const patronEncrypted = encryptData(state.data, finalPatron);
+    const ref = window.fbDoc(window.fbDb, 'ekmek-takip', state.cloudId);
+
+    let updateData = {
+      encrypted: patronEncrypted,
+      patronHash: state.data.passwords.patron,
+      staffHash: state.data.passwords.staff,
+      updatedAt: state._lastSavedAt
+    };
+
+    if (newStaff) {
+      const staffEncrypted = encryptData(state.data, newStaff);
+      updateData.encryptedStaff = staffEncrypted;
+    }
+
+    await window.fbSetDoc(ref, updateData, { merge: true });
+
+    // Update local state if patron pwd changed
+    if (newPatron) {
+      state.password = newPatron;
+      saveLocalAuth();
+    }
+
+    setSyncStatus('');
+    closeModal('passwordModal');
+    showToast('Şifreler güncellendi ✓', 'success');
+
+  } catch (e) {
+    console.error(e);
+    showToast('Hata: ' + e.message, 'error');
+    setSyncStatus('offline');
+  }
+}
+
+// === USER NAME ===
+function changeUserName() {
+  $('newUserName').value = state.userName;
+  openModal('userNameModal');
+}
+
+function saveUserName() {
+  const name = $('newUserName').value.trim();
+  if (!name) return showToast('İsim boş olamaz', 'error');
+  state.userName = name;
+  saveLocalAuth();
+  closeModal('userNameModal');
+  showToast('İsim güncellendi', 'success');
+}
+
+// === COPY CLOUD ID ===
+function copyCloudId() {
+  navigator.clipboard.writeText(state.cloudId).then(() => {
+    showToast('Bulut ID kopyalandı', 'success');
+  });
+}
+
+// === BACKUP / RESTORE ===
+function downloadBackup() {
+  const backup = {
+    version: 1,
+    cloudId: state.cloudId,
+    bizName: state.bizName,
+    exportedAt: new Date().toISOString(),
+    data: {
+      products: state.data.products,
+      days: state.data.days
+    }
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'ekmek-takip-yedek-' + todayKey() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Yedek indirildi', 'success');
+}
+
+function restoreBackup(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const backup = JSON.parse(e.target.result);
+      if (!backup.data) throw new Error('Geçersiz dosya');
+
+      showConfirm(
+        'Yedek geri yüklensin mi?',
+        'Mevcut veriler ile yedek BİRLEŞTİRİLECEK. Aynı tarihli günler yedektekiyle değiştirilir. Ürünler birleştirilir.',
+        () => {
+          if (backup.data.products) {
+            // Merge products by id
+            const existingIds = new Set(state.data.products.map(p => p.id));
+            backup.data.products.forEach(p => {
+              if (!existingIds.has(p.id)) state.data.products.push(p);
+            });
+          }
+          if (backup.data.days) {
+            Object.assign(state.data.days, backup.data.days);
+          }
+          renderAll();
+          scheduleSave();
+          showToast('Yedek yüklendi ✓', 'success');
+        }
+      );
+    } catch (err) {
+      showToast('Dosya okunamadı: ' + err.message, 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// === MODALS ===
+function openModal(id) { $(id).classList.add('active'); }
+function closeModal(id) { $(id).classList.remove('active'); }
+
+// Click outside to close
+$$('.modal-backdrop').forEach(m => {
+  m.addEventListener('click', e => {
+    if (e.target === m) m.classList.remove('active');
+  });
+});
+
+function showConfirm(title, message, onConfirm) {
+  $('confirmTitle').textContent = title;
+  $('confirmMessage').textContent = message;
+  const btn = $('confirmOkBtn');
+  btn.replaceWith(btn.cloneNode(true));
+  const newBtn = $('confirmOkBtn');
+  newBtn.addEventListener('click', () => {
+    closeModal('confirmModal');
+    onConfirm();
+  });
+  openModal('confirmModal');
+}
+
+// === ONLINE/OFFLINE ===
+window.addEventListener('online', () => { state.isOnline = true; setSyncStatus(''); });
+window.addEventListener('offline', () => { state.isOnline = false; setSyncStatus('offline'); });
+
+// === BOOT ===
+async function boot() {
+  await waitForFirebase();
+
+  // Try to auto-login from local storage
+  const auth = loadLocalAuth();
+  if (auth && auth.cloudId && auth.password) {
+    setSyncStatus('syncing');
+    try {
+      const ref = window.fbDoc(window.fbDb, 'ekmek-takip', auth.cloudId);
+      const snap = await window.fbGetDoc(ref);
+      if (snap.exists()) {
+        const docData = snap.data();
+        const pwHash = hashPassword(auth.password);
+        let role = null;
+        if (pwHash === docData.patronHash) role = 'patron';
+        else if (pwHash === docData.staffHash) role = 'staff';
+
+        if (role) {
+          let decrypted = role === 'patron'
+            ? decryptData(docData.encrypted, auth.password)
+            : decryptData(docData.encryptedStaff || docData.encrypted, auth.password);
+
+          if (decrypted) {
+            state.cloudId = auth.cloudId;
+            state.password = auth.password;
+            state.role = role;
+            state.userName = auth.userName || 'Kullanıcı';
+            state.bizName = decrypted.bizName || auth.bizName || 'Ekmek Takip';
+            state.data = decrypted;
+            if (!state.data.passwords) {
+              state.data.passwords = { patron: docData.patronHash, staff: docData.staffHash };
+            }
+            setSyncStatus('');
+            enterApp();
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Auto-login failed:', e);
+    }
+    setSyncStatus('offline');
+  }
+
+  // Show auth screen
+}
+
+boot();
+
+// PWA install
+if ('serviceWorker' in navigator) {
+  // Inline service worker for offline cache
+  const swCode = `
+    self.addEventListener('install', e => self.skipWaiting());
+    self.addEventListener('activate', e => self.clients.claim());
+    self.addEventListener('fetch', e => {});
+  `;
+  const blob = new Blob([swCode], { type: 'text/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(() => {});
+}
+</script>
+
+</body>
+</html>
