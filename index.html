@@ -350,6 +350,57 @@ button { cursor: pointer; }
   color: var(--info);
 }
 
+.bell-btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: background 0.2s, transform 0.2s;
+  flex-shrink: 0;
+}
+
+.bell-btn:hover { background: var(--surface-2); }
+.bell-btn:active { transform: scale(0.95); }
+
+.bell-btn.has-alerts .bell-icon {
+  animation: bellShake 1s ease-in-out infinite;
+}
+
+@keyframes bellShake {
+  0%, 100% { transform: rotate(0); }
+  10%, 30% { transform: rotate(-12deg); }
+  20%, 40% { transform: rotate(12deg); }
+  50% { transform: rotate(0); }
+}
+
+.bell-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg);
+}
+
+.bell-btn:not(.has-alerts) .bell-badge {
+  display: none;
+}
+
 .sync-indicator {
   display: flex;
   align-items: center;
@@ -1222,6 +1273,67 @@ button { cursor: pointer; }
 .toast.error { border-color: var(--danger); color: var(--danger); }
 .toast.warning { border-color: var(--warning); color: var(--warning); }
 
+/* Alert cards */
+.alert-card {
+  background: var(--bg-2);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  border-left: 4px solid var(--text-mute);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.alert-card.severity-high {
+  border-left-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.alert-card.severity-medium {
+  border-left-color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.alert-card.severity-low {
+  border-left-color: var(--info);
+  background: var(--info-soft);
+}
+
+.alert-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.alert-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.alert-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.alert-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.alert-meta {
+  font-size: 10px;
+  color: var(--text-mute);
+  margin-top: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
 /* Empty state */
 .empty-state {
   text-align: center;
@@ -1414,7 +1526,11 @@ button { cursor: pointer; }
         <div id="bizNameDisplay">Ekmek Takip</div>
       </div>
     </div>
-    <div style="display:flex;gap:8px;align-items:center">
+    <div style="display:flex;gap:6px;align-items:center">
+      <button class="bell-btn" id="bellBtn" onclick="openAlertsPanel()" style="display:none">
+        <span class="bell-icon">🔔</span>
+        <span class="bell-badge" id="bellBadge">0</span>
+      </button>
       <span class="role-badge" id="roleBadge">PATRON</span>
       <div class="sync-indicator">
         <div class="sync-dot" id="syncDot"></div>
@@ -1823,6 +1939,22 @@ button { cursor: pointer; }
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('confirmModal')">Vazgeç</button>
       <button class="btn btn-danger" id="confirmOkBtn">Onayla</button>
+    </div>
+  </div>
+</div>
+
+<!-- Alerts Panel Modal -->
+<div class="modal-backdrop" id="alertsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>🔔 Anomali Uyarıları</h3>
+      <div class="modal-close" onclick="closeModal('alertsModal')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div id="alertsList"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('alertsModal')">Kapat</button>
     </div>
   </div>
 </div>
@@ -2262,6 +2394,9 @@ function enterApp() {
     $('passwordSection').style.display = 'none';
     $('navReports').style.display = 'none';
     $('totalCard').classList.add('staff-blur');
+  } else {
+    // Patron için bell butonunu göster
+    $('bellBtn').style.display = 'flex';
   }
 
   setupRealtimeSync();
@@ -2572,6 +2707,7 @@ function renderAll() {
   if ($('page-reports').classList.contains('active')) renderReports();
   if ($('page-history').classList.contains('active')) renderHistory();
   if ($('page-settings').classList.contains('active')) renderSettings();
+  refreshAlerts();
 }
 
 function renderToday() {
@@ -3059,6 +3195,219 @@ function drawProductRevenueChart(productSales) {
 }
 
 // === HISTORY ===
+
+// === ANOMALY DETECTION ===
+// Patron için anomalileri tespit eder. Son 30 günü baz alır.
+function detectAnomalies() {
+  const alerts = [];
+  if (!state.data.days || !state.data.products) return alerts;
+
+  const allDates = Object.keys(state.data.days).sort();
+  if (allDates.length < 3) return alerts; // Yeterli veri yok
+
+  // Bugünün ve son birkaç günün analizi için en yeni günleri al
+  const recentDates = allDates.slice(-7); // son 7 gün
+  const lastDate = allDates[allDates.length - 1];
+  const lastDay = state.data.days[lastDate];
+
+  // === 1. ÜRÜN BAZLI ANORMAL DÜŞÜŞ ===
+  // Son 7 günün ortalamasıyla bugünü kıyasla
+  // Yeterli veri olmalı (en az 4 gün önceki veriler)
+  if (allDates.length >= 5) {
+    const baselineDates = allDates.slice(-15, -1); // son 14 gün (bugün hariç)
+
+    state.data.products.forEach(p => {
+      // Bugünkü satış
+      const todayItem = lastDay.items[p.id];
+      const todaySold = todayItem ? computeSold(todayItem, p) : 0;
+
+      // Eğer bugün hiç hazırlık yapılmamışsa atla (ürün satılmamış olabilir)
+      if (!todayItem || todayItem.prep == null) return;
+      if (todayItem.prep === 0) return;
+
+      // Geçmiş ortalama
+      let totalSold = 0;
+      let dayCount = 0;
+      baselineDates.forEach(d => {
+        const day = state.data.days[d];
+        const it = day.items[p.id];
+        if (it && it.prep != null && it.prep > 0) {
+          totalSold += computeSold(it, p);
+          dayCount++;
+        }
+      });
+      if (dayCount < 3) return; // Yeterli geçmiş yok
+
+      const avgSold = totalSold / dayCount;
+      if (avgSold < 5) return; // Çok az satılan üründe anomali aramak yanlış olur
+
+      const dropPct = ((avgSold - todaySold) / avgSold) * 100;
+
+      if (dropPct >= 40) {
+        alerts.push({
+          severity: dropPct >= 60 ? 'high' : 'medium',
+          icon: '📉',
+          title: `${p.emoji || '🍴'} ${p.name} satışı %${Math.round(dropPct)} düştü`,
+          desc: `Bugün ${todaySold} adet satıldı. Son ${dayCount} günün ortalaması: ${Math.round(avgSold)} adet.`,
+          date: lastDate
+        });
+      }
+    });
+  }
+
+  // === 2. EKMEK HESABI SİSTEMLİ TUTMUYOR ===
+  // Son 5 günde 3+ kez "fazla" veya "eksik" çıktıysa
+  const breadCheckDates = recentDates.slice(-5);
+  let mismatchDays = [];
+  breadCheckDates.forEach(d => {
+    const day = state.data.days[d];
+    if (day.breadPrev == null && day.breadIn == null && day.breadLeft == null) return;
+    if (day.breadLeft == null) return;
+
+    const total = (day.breadPrev || 0) + (day.breadIn || 0);
+    let usedInProducts = 0;
+    state.data.products.filter(p => p.usesBread).forEach(p => {
+      const it = day.items[p.id];
+      if (it && it.prep != null) {
+        usedInProducts += Math.max(0, (it.prep || 0) - (it.left || 0));
+      }
+    });
+    const totalUsed = usedInProducts + (day.breadPlainEaten || 0);
+    const expectedLeft = total - totalUsed;
+    const diff = day.breadLeft - expectedLeft;
+    if (Math.abs(diff) > 0) {
+      mismatchDays.push({ date: d, diff });
+    }
+  });
+
+  if (mismatchDays.length >= 3) {
+    const totalDiff = mismatchDays.reduce((sum, m) => sum + Math.abs(m.diff), 0);
+    const avgDiff = Math.round(totalDiff / mismatchDays.length);
+    const direction = mismatchDays.filter(m => m.diff > 0).length > mismatchDays.length / 2 ? 'fazla' : 'eksik';
+    alerts.push({
+      severity: 'high',
+      icon: '⚠️',
+      title: `Ekmek hesabı sürekli ${direction} çıkıyor`,
+      desc: `Son 5 günün ${mismatchDays.length}'inde ekmek hesabı tutmadı. Ortalama ${avgDiff} adet ${direction}. Sistemli bir sorun olabilir.`,
+      date: mismatchDays[mismatchDays.length - 1].date
+    });
+  }
+
+  // === 3. CİRO ANORMAL DÜŞÜK/YÜKSEK ===
+  if (allDates.length >= 8) {
+    const baselineDates = allDates.slice(-15, -1);
+
+    // Bugünkü ciro
+    let todayRev = 0;
+    state.data.products.forEach(p => {
+      const it = lastDay.items[p.id];
+      if (it) {
+        const sold = computeSold(it, p);
+        if (sold > 0) todayRev += sold * p.price;
+      }
+    });
+
+    // Bugün hiç giriş yapılmamışsa atla
+    let todayHasData = false;
+    state.data.products.forEach(p => {
+      const it = lastDay.items[p.id];
+      if (it && it.prep != null && it.prep > 0) todayHasData = true;
+    });
+    if (todayHasData) {
+      // Geçmiş ortalama ciro
+      let totalRev = 0;
+      let dayCount = 0;
+      baselineDates.forEach(d => {
+        const day = state.data.days[d];
+        let dayRev = 0;
+        let hasData = false;
+        state.data.products.forEach(p => {
+          const it = day.items[p.id];
+          if (it) {
+            const sold = computeSold(it, p);
+            if (sold > 0) {
+              dayRev += sold * p.price;
+              hasData = true;
+            }
+          }
+        });
+        if (hasData) {
+          totalRev += dayRev;
+          dayCount++;
+        }
+      });
+      if (dayCount >= 3) {
+        const avgRev = totalRev / dayCount;
+        if (avgRev > 100) {
+          const changePct = ((todayRev - avgRev) / avgRev) * 100;
+          if (changePct <= -30) {
+            alerts.push({
+              severity: changePct <= -50 ? 'high' : 'medium',
+              icon: '💸',
+              title: `Bugünkü ciro %${Math.round(Math.abs(changePct))} düşük`,
+              desc: `Bugün ${formatTL(todayRev)}, son ${dayCount} günün ortalaması ${formatTL(avgRev)}. Önemli bir düşüş var.`,
+              date: lastDate
+            });
+          } else if (changePct >= 40) {
+            alerts.push({
+              severity: 'low',
+              icon: '🚀',
+              title: `Bugünkü ciro %${Math.round(changePct)} yüksek`,
+              desc: `Bugün ${formatTL(todayRev)}, son ${dayCount} günün ortalaması ${formatTL(avgRev)}. Güzel bir gün!`,
+              date: lastDate
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return alerts;
+}
+
+function refreshAlerts() {
+  if (state.role !== 'patron') return;
+  const alerts = detectAnomalies();
+  state.alerts = alerts;
+
+  const bell = $('bellBtn');
+  const badge = $('bellBadge');
+
+  if (alerts.length === 0) {
+    bell.classList.remove('has-alerts');
+    badge.textContent = '0';
+  } else {
+    bell.classList.add('has-alerts');
+    badge.textContent = alerts.length > 9 ? '9+' : String(alerts.length);
+  }
+}
+
+function openAlertsPanel() {
+  const list = $('alertsList');
+  const alerts = state.alerts || [];
+
+  if (alerts.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="emoji">✓</div><h4>Her şey yolunda</h4><p>Şu an dikkat çeken bir anomali yok</p></div>';
+  } else {
+    // Severity sırası: high → medium → low
+    const sevOrder = { high: 0, medium: 1, low: 2 };
+    const sorted = alerts.slice().sort((a, b) => sevOrder[a.severity] - sevOrder[b.severity]);
+
+    list.innerHTML = sorted.map(a => `
+      <div class="alert-card severity-${a.severity}">
+        <div class="alert-icon">${a.icon}</div>
+        <div class="alert-content">
+          <div class="alert-title">${a.title}</div>
+          <div class="alert-desc">${a.desc}</div>
+          <div class="alert-meta">${formatDateShort(a.date)} · ${getDayName(a.date)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  openModal('alertsModal');
+}
+
 function renderHistory() {
   const list = $('historyList');
   const days = Object.keys(state.data.days || {}).sort().reverse();
