@@ -633,8 +633,8 @@ button { cursor: pointer; }
 
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
 }
 
 .product-field {
@@ -644,9 +644,9 @@ button { cursor: pointer; }
 }
 
 .product-field-label {
-  font-size: 10px;
+  font-size: 9px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   color: var(--text-mute);
   font-weight: 600;
   text-align: center;
@@ -654,14 +654,14 @@ button { cursor: pointer; }
 
 .product-field-input {
   width: 100%;
-  padding: 10px 8px;
+  padding: 10px 4px;
   background: var(--bg);
   border: 1.5px solid var(--border);
   border-radius: 8px;
   text-align: center;
   font-family: 'JetBrains Mono', monospace;
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
   color: var(--text);
   transition: border-color 0.2s;
 }
@@ -672,13 +672,29 @@ button { cursor: pointer; }
 }
 
 .product-field-input.satilan {
-  background: var(--accent-soft);
-  border-color: rgba(245, 158, 11, 0.3);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(217, 119, 6, 0.12));
+  border-color: rgba(245, 158, 11, 0.4);
   color: var(--accent);
+  font-weight: 700;
+  cursor: not-allowed;
 }
 
 .product-field-input.satilan:focus {
   border-color: var(--accent);
+}
+
+.product-field-label.auto {
+  color: var(--accent);
+}
+
+.product-field-label.auto::after {
+  content: ' ⚡';
+  font-size: 9px;
+}
+
+.product-field-input.yenen {
+  background: var(--bg-2);
+  border-color: rgba(217, 119, 6, 0.2);
 }
 
 /* Total / Ciro Card */
@@ -1281,7 +1297,9 @@ button { cursor: pointer; }
 }
 
 @media (min-width: 600px) {
-  .product-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .product-grid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .product-field-input { padding: 10px 8px; font-size: 15px; }
+  .product-field-label { font-size: 10px; }
 }
 </style>
 </head>
@@ -1399,7 +1417,7 @@ button { cursor: pointer; }
               <div class="bread-value-display" id="breadTotal">0</div>
             </div>
             <div class="bread-row">
-              <div class="bread-label">Yenen (otomatik)</div>
+              <div class="bread-label">Kullanılan ⚡</div>
               <div class="bread-value-display" id="breadUsed">0</div>
             </div>
             <div class="bread-row">
@@ -1421,6 +1439,9 @@ button { cursor: pointer; }
           <h3><span class="emoji">🥪</span> Sandviç Ekmekli Ürünler</h3>
         </div>
         <div class="section-body">
+          <div style="font-size:11px;color:var(--text-mute);background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.5">
+            <strong style="color:var(--accent)">⚡ Satılan</strong> = Hazırlık − Yenen − Kalan (otomatik). <strong>Yenen</strong> = personel yemeği, ikram, fire.
+          </div>
           <div class="product-list" id="sandwichProducts"></div>
         </div>
       </div>
@@ -2096,6 +2117,30 @@ function enterApp() {
 
   state.currentDate = todayKey();
 
+  // Migrate legacy data: items had 'sold' field, now we compute it
+  // If old item has prep & sold but no eaten/left, treat sold as 'left' could be wrong;
+  // Best is: if item has sold and prep, compute eaten = prep - sold - left (if left exists)
+  // For safety, we just remove the 'sold' field; user re-enters eaten/left.
+  if (state.data.days) {
+    Object.values(state.data.days).forEach(day => {
+      if (day.items) {
+        Object.values(day.items).forEach(it => {
+          if ('sold' in it && !('eaten' in it)) {
+            // Legacy migration: if we have prep, sold, left — derive eaten
+            if (it.prep != null && it.sold != null && it.left != null) {
+              it.eaten = Math.max(0, it.prep - it.sold - it.left);
+            } else {
+              it.eaten = null;
+            }
+            delete it.sold;
+          } else if (!('eaten' in it)) {
+            it.eaten = null;
+          }
+        });
+      }
+    });
+  }
+
   // Update UI based on role
   $('roleBadge').textContent = state.role === 'patron' ? 'PATRON' : 'ÇALIŞAN';
   $('roleBadge').classList.toggle('staff', state.role === 'staff');
@@ -2257,7 +2302,11 @@ function getCurrentDay() {
 function getItem(productId) {
   const day = getCurrentDay();
   if (!day.items[productId]) {
-    day.items[productId] = { prep: null, left: null, sold: null };
+    day.items[productId] = { prep: null, eaten: null, left: null };
+  }
+  // Backward compat: convert old data without 'eaten' field
+  if (!('eaten' in day.items[productId])) {
+    day.items[productId].eaten = null;
   }
   return day.items[productId];
 }
@@ -2320,15 +2369,15 @@ function renderProducts() {
   $('otherProducts').innerHTML = otherProducts.map(p => productRowHTML(p)).join('') ||
     '<div class="empty-state"><div class="emoji">🍔</div><p>Henüz başka ürün yok</p></div>';
 
-  // Bind inputs
-  $$('.product-field-input').forEach(inp => {
+  // Bind inputs (only editable fields)
+  $$('.product-field-input:not([readonly])').forEach(inp => {
     inp.addEventListener('input', e => {
       const pid = e.target.dataset.pid;
       const field = e.target.dataset.field;
       const val = e.target.value === '' ? null : parseFloat(e.target.value);
       const item = getItem(pid);
       item[field] = isNaN(val) ? null : val;
-      // Update revenue display
+      // Recompute auto-calculated sold value and revenue
       updateProductRevenue(pid);
       recalcBread();
       recalcTotal();
@@ -2339,8 +2388,9 @@ function renderProducts() {
 
 function productRowHTML(p) {
   const item = getItem(p.id);
-  const revenue = (item.sold || 0) * p.price;
-  const hasData = (item.prep != null) || (item.left != null) || (item.sold != null);
+  const sold = computeSold(item);
+  const revenue = sold * p.price;
+  const hasData = (item.prep != null) || (item.eaten != null) || (item.left != null);
   const showRevenue = state.role === 'patron';
 
   return `
@@ -2356,31 +2406,52 @@ function productRowHTML(p) {
       <div class="product-grid">
         <div class="product-field">
           <div class="product-field-label">Hazırlık</div>
-          <input type="number" class="product-field-input" data-pid="${p.id}" data-field="prep" min="0" value="${item.prep ?? ''}" placeholder="—">
+          <input type="number" class="product-field-input" data-pid="${p.id}" data-field="prep" min="0" value="${item.prep ?? ''}" placeholder="—" inputmode="numeric">
+        </div>
+        <div class="product-field">
+          <div class="product-field-label">Yenen</div>
+          <input type="number" class="product-field-input yenen" data-pid="${p.id}" data-field="eaten" min="0" value="${item.eaten ?? ''}" placeholder="—" inputmode="numeric">
         </div>
         <div class="product-field">
           <div class="product-field-label">Kalan</div>
-          <input type="number" class="product-field-input" data-pid="${p.id}" data-field="left" min="0" value="${item.left ?? ''}" placeholder="—">
+          <input type="number" class="product-field-input" data-pid="${p.id}" data-field="left" min="0" value="${item.left ?? ''}" placeholder="—" inputmode="numeric">
         </div>
         <div class="product-field">
-          <div class="product-field-label">Satılan</div>
-          <input type="number" class="product-field-input satilan" data-pid="${p.id}" data-field="sold" min="0" value="${item.sold ?? ''}" placeholder="—">
+          <div class="product-field-label auto">Satılan</div>
+          <input type="number" class="product-field-input satilan" data-pid="${p.id}" data-field="sold" value="${sold || ''}" placeholder="—" readonly tabindex="-1">
         </div>
       </div>
     </div>`;
+}
+
+function computeSold(item) {
+  // Satılan = Hazırlık - Yenen - Kalan
+  // Sadece Hazırlık girilmişse hesapla; aksi halde 0
+  if (item.prep == null) return 0;
+  const prep = item.prep || 0;
+  const eaten = item.eaten || 0;
+  const left = item.left || 0;
+  return Math.max(0, prep - eaten - left);
 }
 
 function updateProductRevenue(pid) {
   const p = state.data.products.find(x => x.id === pid);
   if (!p) return;
   const item = getItem(pid);
-  const rev = (item.sold || 0) * p.price;
+  const sold = computeSold(item);
+  const rev = sold * p.price;
+
+  // Update revenue label
   const el = document.querySelector(`[data-rev-pid="${pid}"]`);
   if (el) el.textContent = formatTL(rev);
 
+  // Update auto-computed sold input
+  const soldInput = document.querySelector(`.product-field-input.satilan[data-pid="${pid}"]`);
+  if (soldInput) soldInput.value = sold || '';
+
   const itemEl = document.querySelector(`.product-item[data-pid="${pid}"]`);
   if (itemEl) {
-    const hasData = (item.prep != null) || (item.left != null) || (item.sold != null);
+    const hasData = (item.prep != null) || (item.eaten != null) || (item.left != null);
     itemEl.classList.toggle('has-data', hasData);
   }
 }
@@ -2398,12 +2469,18 @@ function recalcBread() {
 
   const total = prev + inn;
 
-  // Yenen = sum of "sold" for products that use bread
+  // Yenen ekmek = her sandviç ürün için: Hazırlık - Kalan = (Yenen + Satılan) toplam
+  // Yani satılan + personel/ikram olarak yenen = toplam tüketilen ekmek
   const sandwichProducts = state.data.products.filter(p => p.usesBread);
   let yenen = 0;
   sandwichProducts.forEach(p => {
     const item = getItem(p.id);
-    if (item.sold) yenen += item.sold;
+    const prep = item.prep || 0;
+    const itemLeft = item.left || 0;
+    if (prep > 0) {
+      // Bu üründen tüketilen toplam ekmek = Hazırlık - Kalan
+      yenen += Math.max(0, prep - itemLeft);
+    }
   });
 
   $('breadTotal').textContent = total;
@@ -2460,9 +2537,10 @@ function recalcTotal() {
   state.data.products.forEach(p => {
     const item = day.items[p.id];
     if (!item) return;
-    if (item.sold) {
-      total += item.sold * p.price;
-      totalItems += item.sold;
+    const sold = computeSold(item);
+    if (sold > 0) {
+      total += sold * p.price;
+      totalItems += sold;
       totalProducts++;
     }
   });
@@ -2558,12 +2636,14 @@ function renderReports() {
     let dayItems = 0;
     state.data.products.forEach(p => {
       const item = day.items[p.id];
-      if (!item || !item.sold) return;
-      const rev = item.sold * p.price;
+      if (!item) return;
+      const sold = computeSold(item);
+      if (sold <= 0) return;
+      const rev = sold * p.price;
       dayRev += rev;
-      dayItems += item.sold;
+      dayItems += sold;
       if (!productSales[p.id]) productSales[p.id] = { name: p.name, emoji: p.emoji, qty: 0, rev: 0 };
-      productSales[p.id].qty += item.sold;
+      productSales[p.id].qty += sold;
       productSales[p.id].rev += rev;
     });
     totalRev += dayRev;
@@ -2717,9 +2797,12 @@ function renderHistory() {
     let items = 0;
     state.data.products.forEach(p => {
       const it = day.items[p.id];
-      if (it && it.sold) {
-        rev += it.sold * p.price;
-        items += it.sold;
+      if (it) {
+        const sold = computeSold(it);
+        if (sold > 0) {
+          rev += sold * p.price;
+          items += sold;
+        }
       }
     });
     const showRev = state.role === 'patron';
