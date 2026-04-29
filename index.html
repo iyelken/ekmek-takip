@@ -568,6 +568,20 @@ button { cursor: pointer; }
 
 .bread-value-input:focus { border-color: var(--accent); }
 
+.auto-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
 .bread-value-display {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
@@ -1431,8 +1445,8 @@ button { cursor: pointer; }
         <div class="section-body">
           <div class="bread-summary">
             <div class="bread-row">
-              <div class="bread-label">Dünden Kalan</div>
-              <input type="number" class="bread-value-input" id="breadPrev" min="0" placeholder="0" oninput="onBreadInputChange()" inputmode="numeric">
+              <div class="bread-label">Dünden Kalan <span id="breadPrevAutoBadge" class="auto-badge" style="display:none">otomatik</span></div>
+              <input type="number" class="bread-value-input" id="breadPrev" min="0" placeholder="0" oninput="onBreadPrevManualChange()" inputmode="numeric">
             </div>
             <div class="bread-row">
               <div class="bread-label">Bugün Gelen</div>
@@ -2467,8 +2481,11 @@ function scheduleSave() {
 // === CURRENT DAY HELPERS ===
 function getCurrentDay() {
   if (!state.data.days[state.currentDate]) {
+    // Yeni gün oluşturuluyor - dünkü kalan ekmeği bugünün "Dünden Kalan"ına aktar
+    const yesterdayLeft = getYesterdayBreadLeft(state.currentDate);
+
     state.data.days[state.currentDate] = {
-      breadPrev: null,
+      breadPrev: yesterdayLeft, // dünden otomatik gelir, kullanıcı isterse değiştirir
       breadIn: null,
       breadLeft: null,
       breadPlainEaten: null,
@@ -2483,6 +2500,18 @@ function getCurrentDay() {
     state.data.days[state.currentDate].breadPlainEaten = null;
   }
   return state.data.days[state.currentDate];
+}
+
+function getYesterdayBreadLeft(currentDateIso) {
+  // Bir önceki gün varsa onun breadLeft değerini döndür
+  const d = new Date(currentDateIso + 'T12:00:00');
+  d.setDate(d.getDate() - 1);
+  const yesterdayIso = isoFromDate(d);
+  const yesterday = state.data.days[yesterdayIso];
+  if (yesterday && yesterday.breadLeft != null) {
+    return yesterday.breadLeft;
+  }
+  return null;
 }
 
 function getItem(productId) {
@@ -2541,6 +2570,11 @@ function renderToday() {
   $('breadIn').value = day.breadIn ?? '';
   $('breadLeft').value = day.breadLeft ?? '';
   $('breadPlainEaten').value = day.breadPlainEaten ?? '';
+
+  // Eğer breadPrev otomatik geldiyse (manuel değiştirilmemişse) badge göster
+  const yesterdayLeft = getYesterdayBreadLeft(state.currentDate);
+  const isAutoFilled = !day._breadPrevManual && yesterdayLeft != null && day.breadPrev === yesterdayLeft;
+  $('breadPrevAutoBadge').style.display = isAutoFilled ? 'inline-block' : 'none';
 
   // Render products
   renderProducts();
@@ -2725,6 +2759,15 @@ function recalcBread() {
 
 // Bread input change handler - sadece kullanıcı değiştirdiğinde tetiklenir
 function onBreadInputChange() {
+  recalcBread();
+  scheduleSave();
+}
+
+// Dünden Kalan manuel değiştirildiğinde
+function onBreadPrevManualChange() {
+  const day = getCurrentDay();
+  day._breadPrevManual = true;
+  $('breadPrevAutoBadge').style.display = 'none';
   recalcBread();
   scheduleSave();
 }
