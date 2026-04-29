@@ -1432,23 +1432,31 @@ button { cursor: pointer; }
           <div class="bread-summary">
             <div class="bread-row">
               <div class="bread-label">Dünden Kalan</div>
-              <input type="number" class="bread-value-input" id="breadPrev" min="0" placeholder="0" oninput="recalcBread()">
+              <input type="number" class="bread-value-input" id="breadPrev" min="0" placeholder="0" oninput="onBreadInputChange()" inputmode="numeric">
             </div>
             <div class="bread-row">
               <div class="bread-label">Bugün Gelen</div>
-              <input type="number" class="bread-value-input" id="breadIn" min="0" placeholder="0" oninput="recalcBread()">
+              <input type="number" class="bread-value-input" id="breadIn" min="0" placeholder="0" oninput="onBreadInputChange()" inputmode="numeric">
             </div>
             <div class="bread-row total">
               <div class="bread-label"><strong>Toplam Hazırlık</strong></div>
               <div class="bread-value-display" id="breadTotal">0</div>
             </div>
             <div class="bread-row">
-              <div class="bread-label">Kullanılan ⚡</div>
+              <div class="bread-label" title="Sandviç ürünlerden tüketilen toplam (Hazırlık - Kalan)">Üründe Kullanılan ⚡</div>
+              <div class="bread-value-display" id="breadUsedInProducts">0</div>
+            </div>
+            <div class="bread-row">
+              <div class="bread-label" title="Personelin sade ekmek olarak tükettiği">Sade Yenen</div>
+              <input type="number" class="bread-value-input" id="breadPlainEaten" min="0" placeholder="0" oninput="onBreadInputChange()" inputmode="numeric">
+            </div>
+            <div class="bread-row">
+              <div class="bread-label"><strong>Toplam Kullanılan</strong></div>
               <div class="bread-value-display" id="breadUsed">0</div>
             </div>
             <div class="bread-row">
               <div class="bread-label">Bugün Kalan</div>
-              <input type="number" class="bread-value-input" id="breadLeft" min="0" placeholder="0" oninput="recalcBread()">
+              <input type="number" class="bread-value-input" id="breadLeft" min="0" placeholder="0" oninput="onBreadInputChange()" inputmode="numeric">
             </div>
             <div class="bread-row result">
               <div class="bread-label"><strong>Sonuç</strong></div>
@@ -2319,11 +2327,16 @@ function getCurrentDay() {
       breadPrev: null,
       breadIn: null,
       breadLeft: null,
+      breadPlainEaten: null,
       items: {},
       notes: '',
       notesAuthor: '',
       notesUpdated: null
     };
+  }
+  // Backward compat
+  if (!('breadPlainEaten' in state.data.days[state.currentDate])) {
+    state.data.days[state.currentDate].breadPlainEaten = null;
   }
   return state.data.days[state.currentDate];
 }
@@ -2383,6 +2396,7 @@ function renderToday() {
   $('breadPrev').value = day.breadPrev ?? '';
   $('breadIn').value = day.breadIn ?? '';
   $('breadLeft').value = day.breadLeft ?? '';
+  $('breadPlainEaten').value = day.breadPlainEaten ?? '';
 
   // Render products
   renderProducts();
@@ -2498,39 +2512,45 @@ function recalcBread() {
   const prev = parseFloat($('breadPrev').value) || 0;
   const inn = parseFloat($('breadIn').value) || 0;
   const left = parseFloat($('breadLeft').value) || 0;
+  const plainEaten = parseFloat($('breadPlainEaten').value) || 0;
 
   // Save to day
   day.breadPrev = $('breadPrev').value === '' ? null : prev;
   day.breadIn = $('breadIn').value === '' ? null : inn;
   day.breadLeft = $('breadLeft').value === '' ? null : left;
+  day.breadPlainEaten = $('breadPlainEaten').value === '' ? null : plainEaten;
 
   const total = prev + inn;
 
-  // Yenen ekmek = her sandviç ürün için: Hazırlık - Kalan = (Yenen + Satılan) toplam
-  // Yani satılan + personel/ikram olarak yenen = toplam tüketilen ekmek
+  // Üründe kullanılan ekmek = her sandviç ürün için: Hazırlık - Kalan
+  // (Bu satılan + üründe yenen ekmeği kapsar)
   const sandwichProducts = state.data.products.filter(p => p.usesBread);
-  let yenen = 0;
+  let usedInProducts = 0;
   sandwichProducts.forEach(p => {
     const item = getItem(p.id);
     const prep = item.prep || 0;
     const itemLeft = item.left || 0;
     if (prep > 0) {
-      // Bu üründen tüketilen toplam ekmek = Hazırlık - Kalan
-      yenen += Math.max(0, prep - itemLeft);
+      usedInProducts += Math.max(0, prep - itemLeft);
     }
   });
 
-  $('breadTotal').textContent = total;
-  $('breadUsed').textContent = yenen;
+  // Toplam kullanılan = ürünlerden + sade yenen
+  const totalUsed = usedInProducts + plainEaten;
 
-  // Beklenen kalan = total - yenen
-  const expectedLeft = total - yenen;
+  $('breadTotal').textContent = total;
+  $('breadUsedInProducts').textContent = usedInProducts;
+  $('breadUsed').textContent = totalUsed;
+
+  // Beklenen kalan = total - totalUsed
+  const expectedLeft = total - totalUsed;
   const diff = left - expectedLeft;
 
   const diffEl = $('breadDiff');
   const statusEl = $('breadStatus');
 
-  if (day.breadLeft == null && day.breadPrev == null && day.breadIn == null) {
+  // Hiç veri yoksa boş göster
+  if (day.breadLeft == null && day.breadPrev == null && day.breadIn == null && day.breadPlainEaten == null) {
     diffEl.textContent = '—';
     diffEl.className = 'bread-value-display';
     statusEl.style.display = 'none';
@@ -2563,6 +2583,12 @@ function recalcBread() {
     statusEl.className = 'bread-status eksik';
     statusEl.textContent = `❌ ${Math.abs(diff)} adet ekmek eksik`;
   }
+}
+
+// Bread input change handler - sadece kullanıcı değiştirdiğinde tetiklenir
+function onBreadInputChange() {
+  recalcBread();
+  scheduleSave();
 }
 
 function recalcTotal() {
