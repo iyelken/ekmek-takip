@@ -671,9 +671,10 @@ button { cursor: pointer; }
 
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 6px;
 }
+.product-grid.grid-3 { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.product-grid.grid-4 { grid-template-columns: repeat(4, 1fr); }
 
 .product-field {
   display: flex;
@@ -1335,7 +1336,8 @@ button { cursor: pointer; }
 }
 
 @media (min-width: 600px) {
-  .product-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .product-grid.grid-3 { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .product-grid.grid-4 { grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .product-field-input { padding: 10px 8px; font-size: 15px; }
   .product-field-label { font-size: 10px; }
 }
@@ -1500,6 +1502,9 @@ button { cursor: pointer; }
           <h3><span class="emoji">🍔</span> Diğer Ürünler</h3>
         </div>
         <div class="section-body">
+          <div style="font-size:11px;color:var(--text-mute);background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.5">
+            <strong style="color:var(--accent)">⚡ Satılan</strong> = Hazırlık − Yenen − Kalan. <strong>Yenen</strong> = personel yemeği, ikram, fire.
+          </div>
           <div class="product-list" id="otherProducts"></div>
         </div>
       </div>
@@ -2630,10 +2635,20 @@ function renderProducts() {
 
 function productRowHTML(p) {
   const item = getItem(p.id);
-  const sold = computeSold(item);
+  const sold = computeSold(item, p);
   const revenue = sold * p.price;
-  const hasData = (item.prep != null) || (item.left != null);
+  const hasData = (item.prep != null) || (item.eaten != null) || (item.left != null);
   const showRevenue = state.role === 'patron';
+
+  // Sandviç ekmekli ürünlerde Yenen yok (Hazırlık | Kalan | Satılan)
+  // Diğer ürünlerde Yenen var (Hazırlık | Yenen | Kalan | Satılan)
+  const yenenField = p.usesBread ? '' : `
+        <div class="product-field">
+          <div class="product-field-label">Yenen</div>
+          <input type="number" class="product-field-input yenen" data-pid="${p.id}" data-field="eaten" min="0" value="${item.eaten ?? ''}" placeholder="—" inputmode="numeric">
+        </div>`;
+
+  const gridClass = p.usesBread ? 'product-grid grid-3' : 'product-grid grid-4';
 
   return `
     <div class="product-item ${hasData ? 'has-data' : ''}" data-pid="${p.id}">
@@ -2645,11 +2660,11 @@ function productRowHTML(p) {
         </div>
         ${showRevenue ? `<div class="product-revenue mono" data-rev-pid="${p.id}">${formatTL(revenue)}</div>` : ''}
       </div>
-      <div class="product-grid">
+      <div class="${gridClass}">
         <div class="product-field">
           <div class="product-field-label">Hazırlık</div>
           <input type="number" class="product-field-input" data-pid="${p.id}" data-field="prep" min="0" value="${item.prep ?? ''}" placeholder="—" inputmode="numeric">
-        </div>
+        </div>${yenenField}
         <div class="product-field">
           <div class="product-field-label">Kalan</div>
           <input type="number" class="product-field-input" data-pid="${p.id}" data-field="left" min="0" value="${item.left ?? ''}" placeholder="—" inputmode="numeric">
@@ -2662,19 +2677,24 @@ function productRowHTML(p) {
     </div>`;
 }
 
-function computeSold(item) {
-  // Satılan = Hazırlık - Kalan
+function computeSold(item, product) {
+  // Sandviç ekmekli: Satılan = Hazırlık - Kalan
+  // Diğer ürünler: Satılan = Hazırlık - Yenen - Kalan
   if (item.prep == null) return 0;
   const prep = item.prep || 0;
   const left = item.left || 0;
-  return Math.max(0, prep - left);
+  if (product && product.usesBread) {
+    return Math.max(0, prep - left);
+  }
+  const eaten = item.eaten || 0;
+  return Math.max(0, prep - eaten - left);
 }
 
 function updateProductRevenue(pid) {
   const p = state.data.products.find(x => x.id === pid);
   if (!p) return;
   const item = getItem(pid);
-  const sold = computeSold(item);
+  const sold = computeSold(item, p);
   const rev = sold * p.price;
 
   // Update revenue label
@@ -2794,7 +2814,7 @@ function recalcTotal() {
   state.data.products.forEach(p => {
     const item = day.items[p.id];
     if (!item) return;
-    const sold = computeSold(item);
+    const sold = computeSold(item, p);
     if (sold > 0) {
       total += sold * p.price;
       totalItems += sold;
@@ -2894,7 +2914,7 @@ function renderReports() {
     state.data.products.forEach(p => {
       const item = day.items[p.id];
       if (!item) return;
-      const sold = computeSold(item);
+      const sold = computeSold(item, p);
       if (sold <= 0) return;
       const rev = sold * p.price;
       dayRev += rev;
@@ -3055,7 +3075,7 @@ function renderHistory() {
     state.data.products.forEach(p => {
       const it = day.items[p.id];
       if (it) {
-        const sold = computeSold(it);
+        const sold = computeSold(it, p);
         if (sold > 0) {
           rev += sold * p.price;
           items += sold;
