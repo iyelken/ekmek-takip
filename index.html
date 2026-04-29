@@ -657,8 +657,8 @@ button { cursor: pointer; }
 
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
 }
 
 .product-field {
@@ -1321,7 +1321,7 @@ button { cursor: pointer; }
 }
 
 @media (min-width: 600px) {
-  .product-grid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .product-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .product-field-input { padding: 10px 8px; font-size: 15px; }
   .product-field-label { font-size: 10px; }
 }
@@ -1439,18 +1439,18 @@ button { cursor: pointer; }
               <input type="number" class="bread-value-input" id="breadIn" min="0" placeholder="0" oninput="onBreadInputChange()" inputmode="numeric">
             </div>
             <div class="bread-row total">
-              <div class="bread-label"><strong>Toplam Hazırlık</strong></div>
+              <div class="bread-label"><strong>Toplam Ekmek</strong></div>
               <div class="bread-value-display" id="breadTotal">0</div>
             </div>
             <div class="bread-row">
-              <div class="bread-label" title="Sandviç ürünlerden tüketilen toplam (Hazırlık - Kalan)">Üründe Kullanılan ⚡</div>
+              <div class="bread-label">Satılan Ekmek ⚡</div>
               <div class="bread-value-display" id="breadUsedInProducts">0</div>
             </div>
             <div class="bread-row">
-              <div class="bread-label" title="Personelin sade ekmek olarak tükettiği">Sade Yenen</div>
+              <div class="bread-label">Sade Yenen</div>
               <input type="number" class="bread-value-input" id="breadPlainEaten" min="0" placeholder="0" oninput="onBreadInputChange()" inputmode="numeric">
             </div>
-            <div class="bread-row">
+            <div class="bread-row" style="display:none">
               <div class="bread-label"><strong>Toplam Kullanılan</strong></div>
               <div class="bread-value-display" id="breadUsed">0</div>
             </div>
@@ -1474,7 +1474,7 @@ button { cursor: pointer; }
         </div>
         <div class="section-body">
           <div style="font-size:11px;color:var(--text-mute);background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.5">
-            <strong style="color:var(--accent)">⚡ Satılan</strong> = Hazırlık − Yenen − Kalan (otomatik). <strong>Yenen</strong> = personel yemeği, ikram, fire.
+            <strong style="color:var(--accent)">⚡ Satılan</strong> = Hazırlık − Kalan (otomatik hesaplanır)
           </div>
           <div class="product-list" id="sandwichProducts"></div>
         </div>
@@ -2585,7 +2585,7 @@ function productRowHTML(p) {
   const item = getItem(p.id);
   const sold = computeSold(item);
   const revenue = sold * p.price;
-  const hasData = (item.prep != null) || (item.eaten != null) || (item.left != null);
+  const hasData = (item.prep != null) || (item.left != null);
   const showRevenue = state.role === 'patron';
 
   return `
@@ -2604,10 +2604,6 @@ function productRowHTML(p) {
           <input type="number" class="product-field-input" data-pid="${p.id}" data-field="prep" min="0" value="${item.prep ?? ''}" placeholder="—" inputmode="numeric">
         </div>
         <div class="product-field">
-          <div class="product-field-label">Yenen</div>
-          <input type="number" class="product-field-input yenen" data-pid="${p.id}" data-field="eaten" min="0" value="${item.eaten ?? ''}" placeholder="—" inputmode="numeric">
-        </div>
-        <div class="product-field">
           <div class="product-field-label">Kalan</div>
           <input type="number" class="product-field-input" data-pid="${p.id}" data-field="left" min="0" value="${item.left ?? ''}" placeholder="—" inputmode="numeric">
         </div>
@@ -2620,13 +2616,11 @@ function productRowHTML(p) {
 }
 
 function computeSold(item) {
-  // Satılan = Hazırlık - Yenen - Kalan
-  // Sadece Hazırlık girilmişse hesapla; aksi halde 0
+  // Satılan = Hazırlık - Kalan
   if (item.prep == null) return 0;
   const prep = item.prep || 0;
-  const eaten = item.eaten || 0;
   const left = item.left || 0;
-  return Math.max(0, prep - eaten - left);
+  return Math.max(0, prep - left);
 }
 
 function updateProductRevenue(pid) {
@@ -2646,7 +2640,7 @@ function updateProductRevenue(pid) {
 
   const itemEl = document.querySelector(`.product-item[data-pid="${pid}"]`);
   if (itemEl) {
-    const hasData = (item.prep != null) || (item.eaten != null) || (item.left != null);
+    const hasData = (item.prep != null) || (item.left != null);
     itemEl.classList.toggle('has-data', hasData);
   }
 }
@@ -2719,13 +2713,13 @@ function recalcBread() {
     diffEl.className = 'bread-value-display';
     statusEl.style.display = 'block';
     statusEl.className = 'bread-status fazla';
-    statusEl.textContent = `⚠️ ${diff} adet ekmek fazla kalmış`;
+    statusEl.textContent = `⚠️ ${diff} adet ekmek fazla yazılmış`;
   } else {
     diffEl.textContent = diff + ' eksik';
     diffEl.className = 'bread-value-display danger';
     statusEl.style.display = 'block';
     statusEl.className = 'bread-status eksik';
-    statusEl.textContent = `❌ ${Math.abs(diff)} adet ekmek eksik`;
+    statusEl.textContent = `❌ ${Math.abs(diff)} adet ekmek eksik yazılmış`;
   }
 }
 
