@@ -9,7 +9,46 @@
 <meta name="apple-mobile-web-app-title" content="Ekmek Takip">
 <title>Ekmek Takip</title>
 
-<link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkVrbWVrIFRha2lwIiwKICAic2hvcnRfbmFtZSI6ICJFa21layIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMWExNDEwIiwKICAidGhlbWVfY29sb3IiOiAiIzFhMTQxMCIsCiAgImljb25zIjogW3sKICAgICJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sLDxzdmcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJyB2aWV3Qm94PScwIDAgMTkyIDE5Micgd2lkdGg9JzE5MicgaGVpZ2h0PScxOTInPjxyZWN0IHdpZHRoPScxOTInIGhlaWdodD0nMTkyJyByeD0nNDAnIGZpbGw9JyMxYTE0MTAnLz48dGV4dCB4PSc5NicgeT0nMTI4JyBmb250LXNpemU9JzEwMCcgdGV4dC1hbmNob3I9J21pZGRsZScgZmlsbD0nI2Y1OWUwYic+8J+NnDwvdGV4dD48L3N2Zz4iLAogICAgInNpemVzIjogIjE5MngxOTIiLAogICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIKICB9XQp9">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231a1410'/%3E%3Ctext x='50' y='65' font-size='48' font-weight='700' text-anchor='middle' fill='%23f59e0b' font-family='Arial'%3EEK%3C/text%3E%3C/svg%3E">
+
+<script>
+// PWA Manifest'i çalışma zamanında Blob URL olarak oluştur
+(function() {
+  // SVG icon - emoji yerine "EK" harfleri (PWA icon olarak güvenli)
+  const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+    <rect width="192" height="192" rx="40" fill="#1a1410"/>
+    <rect x="32" y="48" width="128" height="96" rx="20" fill="#f59e0b"/>
+    <rect x="48" y="64" width="96" height="64" rx="12" fill="#fbbf24"/>
+    <text x="96" y="118" font-size="42" font-weight="700" text-anchor="middle" fill="#1a1410" font-family="Arial">EK</text>
+  </svg>`;
+  // encodeURIComponent ile Unicode-safe encoding (btoa yerine)
+  const iconUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(iconSvg);
+
+  const manifest = {
+    name: "Ekmek Takip",
+    short_name: "Ekmek Takip",
+    description: "Gunluk ekmek uretim ve satis takibi",
+    start_url: ".",
+    scope: ".",
+    display: "standalone",
+    orientation: "portrait",
+    background_color: "#1a1410",
+    theme_color: "#1a1410",
+    icons: [
+      { src: iconUrl, sizes: "192x192", type: "image/svg+xml", purpose: "any" },
+      { src: iconUrl, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
+    ]
+  };
+
+  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('link');
+  link.rel = 'manifest';
+  link.href = url;
+  document.head.appendChild(link);
+})();
+</script>
+</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
