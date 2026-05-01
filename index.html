@@ -1172,11 +1172,12 @@ button { cursor: pointer; }
 
 /* Önemlilik - sol kenar çizgisi - sade */
 .message-card.priority-urgent {
-  background: linear-gradient(90deg, rgba(239, 68, 68, 0.10), var(--bg-2) 40%);
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.12), var(--bg-2) 40%);
 }
 
 .message-card.priority-info {
-  background: linear-gradient(90deg, rgba(96, 165, 250, 0.08), var(--bg-2) 40%);
+  background: linear-gradient(90deg, rgba(96, 165, 250, 0.14), var(--bg-2) 40%);
+  box-shadow: inset 2px 0 0 rgba(96, 165, 250, 0.5);
 }
 
 /* Görev tamamlandı - solgun */
@@ -1391,35 +1392,40 @@ button { cursor: pointer; }
   font-weight: 600;
 }
 
-/* Tamamlanmış görevde hatırlatma solgun */
+/* Tamamlanmış görevde hatırlatma solgun ama okunaklı */
 .message-card.task-done .message-reminder-info {
-  opacity: 0.7;
-  text-decoration: line-through;
+  opacity: 0.5;
 }
 
 /* Görev tamamla butonu - mesaj altında, küçük */
 .task-action-row {
-  margin-top: 6px;
+  margin-top: 8px;
   margin-left: 36px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .task-toggle-btn {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-dim);
-  padding: 5px 10px;
+  padding: 5px 12px;
   border-radius: 6px;
   font-size: 12px;
   cursor: pointer;
   font-family: inherit;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   font-weight: 600;
   transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.task-toggle-btn:hover {
+  transform: translateY(-1px);
 }
 
 .task-toggle-btn:not(.done) {
@@ -1436,7 +1442,7 @@ button { cursor: pointer; }
 
 .task-done-info {
   font-size: 11px;
-  color: #22c55e;
+  color: var(--text-mute);
 }
 
 /* Düzenlendi etiketi - sade */
@@ -1531,6 +1537,97 @@ button { cursor: pointer; }
 .notes-input:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+/* Büyük kompozer - notlar sayfasında */
+.notes-input-large {
+  min-height: 120px;
+  font-size: 15px;
+  padding: 14px 16px;
+}
+
+/* Kompozer toggle (✓ Görev / 📅 Tarih) */
+.composer-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  background: var(--bg-2);
+  padding: 7px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+
+.composer-toggle:hover {
+  border-color: var(--accent);
+}
+
+.composer-toggle input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.composer-toggle:has(input:checked) {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Gönder butonu - küçük, sağa yaslı */
+.btn-send {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.15s;
+  height: 36px;
+}
+
+.btn-send:hover {
+  background: #ea7c00;
+  transform: translateY(-1px);
+}
+
+.btn-send:active {
+  transform: translateY(0);
+}
+
+.send-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Composer'da priority chip'leri kompakt */
+.priority-chip {
+  padding: 6px 10px !important;
+  font-size: 14px !important;
+  min-width: 36px;
+  text-align: center;
+}
+
+/* Mobilde composer satırı sarmaladığında gönder full genişlik olsun */
+@media (max-width: 480px) {
+  .btn-send {
+    margin-left: 0 !important;
+    flex: 1;
+    justify-content: center;
+  }
+  .send-text {
+    display: inline;
+  }
 }
 
 /* ========== SETTINGS ========== */
@@ -2333,58 +2430,53 @@ button { cursor: pointer; }
               <div id="replyToText" style="color:var(--text-dim);font-style:italic"></div>
             </div>
 
-            <textarea class="notes-input" id="composerText" placeholder="Mesajını yaz... (Örn: Yarın ekmek 50 fazla istesin, 5 Mayıs için sipariş notu vs.)"></textarea>
+            <textarea class="notes-input notes-input-large" id="composerText" placeholder="Mesajını yaz... (Örn: Yarın ekmek 50 fazla istesin, 5 Mayıs için sipariş notu vs.)"></textarea>
             
-            <!-- Üst seçenekler -->
+            <!-- Tüm seçenekler tek satırda -->
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center">
               <!-- Önemlilik -->
               <div class="filter-chips" style="margin:0;flex-wrap:nowrap;gap:4px">
-                <div class="chip priority-chip" data-priority="info">💬 Bilgi</div>
-                <div class="chip priority-chip active" data-priority="normal">📝 Normal</div>
-                <div class="chip priority-chip" data-priority="urgent">🔴 Acil</div>
+                <div class="chip priority-chip" data-priority="info">💬</div>
+                <div class="chip priority-chip active" data-priority="normal">📝</div>
+                <div class="chip priority-chip" data-priority="urgent">🔴</div>
               </div>
-            </div>
-
-            <!-- Alt seçenekler -->
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center">
-              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--bg-2);padding:8px 12px;border-radius:8px;border:1px solid var(--border)">
-                <input type="checkbox" id="composerIsTask" style="width:16px;height:16px;cursor:pointer">
-                <span>✓ Yapılacak iş</span>
+              
+              <label class="composer-toggle">
+                <input type="checkbox" id="composerIsTask">
+                <span>✓ Görev</span>
               </label>
               
-              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--bg-2);padding:8px 12px;border-radius:8px;border:1px solid var(--border)">
-                <input type="checkbox" id="composerHasReminder" style="width:16px;height:16px;cursor:pointer" onchange="toggleReminderDate()">
-                <span>📅 Tarih hatırlat</span>
+              <label class="composer-toggle">
+                <input type="checkbox" id="composerHasReminder" onchange="toggleReminderDate()">
+                <span>📅 Tarih</span>
               </label>
               
-              <input type="date" id="composerReminderDate" class="form-input" style="display:none;width:160px;height:38px;padding:6px 10px">
+              <input type="date" id="composerReminderDate" class="form-input" style="display:none;width:140px;height:34px;padding:4px 8px;font-size:13px">
+              
+              <!-- Gönder butonu sağa yaslı, küçük -->
+              <button class="btn-send" onclick="sendNote()" title="Gönder" style="margin-left:auto">
+                <span class="send-icon">➤</span>
+                <span class="send-text">Gönder</span>
+              </button>
             </div>
-            
-            <button class="btn btn-primary" style="width:100%;margin-top:14px" onclick="sendNote()">📤 Gönder</button>
           </div>
         </div>
 
-        <!-- Filtreler ve Arama -->
+        <!-- Filtreler + Arama + Mesaj Listesi: tek karta birleşik -->
         <div class="section">
           <div class="section-body">
             <input type="text" class="form-input" id="notesSearch" placeholder="🔍 Notlarda ara..." style="margin-bottom:10px" oninput="renderNotes()">
-            <div class="filter-chips" id="notesFilterChips" style="margin:0">
+            <div class="filter-chips" id="notesFilterChips" style="margin:0 0 12px 0">
               <div class="chip active" data-filter="all">📚 Tümü <span class="filter-count" id="cnt-all">0</span></div>
-              <div class="chip" data-filter="active">✓ Aktif Görev <span class="filter-count" id="cnt-active">0</span></div>
-              <div class="chip" data-filter="done">✅ Tamamlanan <span class="filter-count" id="cnt-done">0</span></div>
+              <div class="chip" data-filter="active">✓ Aktif <span class="filter-count" id="cnt-active">0</span></div>
+              <div class="chip" data-filter="done">✅ Tamam <span class="filter-count" id="cnt-done">0</span></div>
               <div class="chip" data-filter="reminder">📅 Hatırlatma <span class="filter-count" id="cnt-reminder">0</span></div>
               <div class="chip" data-filter="urgent">🔴 Acil <span class="filter-count" id="cnt-urgent">0</span></div>
             </div>
-          </div>
-        </div>
-
-        <!-- Mesaj Akışı -->
-        <div class="section">
-          <div class="section-header">
-            <h3><span class="emoji">💬</span> Mesajlar</h3>
-            <span id="notesCount" style="font-size:12px;color:var(--text-mute);font-weight:600"></span>
-          </div>
-          <div class="section-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)">
+              <span style="font-size:11px;color:var(--text-mute);text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Mesajlar</span>
+              <span id="notesCount" style="font-size:11px;color:var(--text-mute);font-weight:600"></span>
+            </div>
             <div id="notesList"></div>
           </div>
         </div>
@@ -4437,7 +4529,7 @@ function renderMessageCard(m, highlight, todayIso) {
   }
   
   const author = m.author || 'Bilinmeyen';
-  const initial = author.charAt(0).toUpperCase();
+  const initial = author.charAt(0).toLocaleUpperCase('tr-TR');
   const time = formatRelativeTime(m.createdAt);
   
   const classes = ['message-card'];
@@ -4548,7 +4640,7 @@ function renderMessageCard(m, highlight, todayIso) {
 // === MESAJ DÜZENLEME ===
 function renderMessageEditForm(m) {
   const author = m.author || 'Bilinmeyen';
-  const initial = author.charAt(0).toUpperCase();
+  const initial = author.charAt(0).toLocaleUpperCase('tr-TR');
   
   return '<div class="message-card" id="msg-' + m.id + '" style="background:rgba(245,158,11,0.06);box-shadow:inset 3px 0 0 var(--accent)">' +
     '<div class="message-header">' +
