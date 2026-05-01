@@ -2475,7 +2475,10 @@ button { cursor: pointer; }
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)">
               <span style="font-size:11px;color:var(--text-mute);text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Mesajlar</span>
-              <span id="notesCount" style="font-size:11px;color:var(--text-mute);font-weight:600"></span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span id="notesCount" style="font-size:11px;color:var(--text-mute);font-weight:600"></span>
+                <button onclick="manualRefreshNotes()" title="Yenile" style="background:transparent;border:1px solid var(--border);border-radius:6px;width:28px;height:28px;cursor:pointer;color:var(--text-mute);font-size:14px;display:flex;align-items:center;justify-content:center;font-family:inherit">🔄</button>
+              </div>
             </div>
             <div id="notesList"></div>
           </div>
@@ -3294,7 +3297,14 @@ async function repairStaffBlob() {
 function setupRealtimeSync() {
   if (state.unsubscribe) state.unsubscribe();
   const ref = window.fbDoc(window.fbDb, 'ekmek-takip', state.cloudId);
+  
+  // Listener kuruluş zamanını kaydet (sağlık kontrolü için)
+  state._listenerStartedAt = Date.now();
+  state._lastSnapAt = Date.now();
+  
   state.unsubscribe = window.fbOnSnapshot(ref, snap => {
+    state._lastSnapAt = Date.now(); // Listener canlı işareti
+    
     if (!snap.exists()) return;
     const docData = snap.data();
     let decrypted = null;
@@ -3318,8 +3328,97 @@ function setupRealtimeSync() {
   }, err => {
     console.error('Sync error:', err);
     setSyncStatus('offline');
+    // 5 saniye sonra yeniden dene
+    setTimeout(() => {
+      if (state.cloudId) {
+        console.log('Listener yeniden bağlanıyor...');
+        setupRealtimeSync();
+      }
+    }, 5000);
   });
 }
+
+// === MOBİL/PWA ARKA PLAN UYANMA SORUNU İÇİN HEARTBEAT ===
+// Mobil tarayıcılar arka plan'da Firebase WebSocket'ini öldürür.
+// Sayfa tekrar görünür olduğunda manuel olarak veri çek + listener'ı yenile.
+function reconnectIfStale() {
+  if (!state.cloudId || !state.password) return;
+  
+  // Son 60 saniyede listener'dan veri gelmemişse yenile
+  const stale = state._lastSnapAt && (Date.now() - state._lastSnapAt > 60000);
+  
+  if (stale || !state.unsubscribe) {
+    console.log('Listener bayatlamış, yenileniyor...');
+    setupRealtimeSync();
+  }
+  
+  // Manuel olarak son veriyi çek (kayıp mesaj olmasın)
+  manualSyncCheck();
+}
+
+async function manualSyncCheck() {
+  if (!state.cloudId || !state.password) return;
+  try {
+    const ref = window.fbDoc(window.fbDb, 'ekmek-takip', state.cloudId);
+    const snap = await window.fbGetDoc(ref);
+    if (!snap.exists()) return;
+    
+    const docData = snap.data();
+    
+    // Bizden daha yeni veri var mı?
+    if (state._lastSavedAt && docData.updatedAt && docData.updatedAt <= state._lastSavedAt) {
+      return; // Kendi yazdığımız, atla
+    }
+    
+    let decrypted = null;
+    if (state.role === 'patron') {
+      decrypted = decryptData(docData.encrypted, state.password);
+    } else {
+      decrypted = decryptData(docData.encryptedStaff || docData.encrypted, state.password);
+    }
+    if (!decrypted) return;
+    
+    state.data = decrypted;
+    state.bizName = decrypted.bizName || state.bizName;
+    state._lastSnapAt = Date.now();
+    renderAll();
+  } catch (e) {
+    console.warn('Manual sync hata:', e);
+  }
+}
+
+// Sayfa görünür olduğunda yenile (mobil ekran açma, PWA'ya geri dönme)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && state.cloudId) {
+    reconnectIfStale();
+  }
+});
+
+// Pencere/sekme tekrar focus olduğunda yenile (desktop'ta)
+window.addEventListener('focus', () => {
+  if (state.cloudId) {
+    reconnectIfStale();
+  }
+});
+
+// Internet bağlantısı geri geldiğinde yenile
+window.addEventListener('online', () => {
+  if (state.cloudId) {
+    setSyncStatus('');
+    reconnectIfStale();
+  }
+});
+
+// Periyodik heartbeat - her 30 saniyede bir kontrol
+setInterval(() => {
+  // Sadece sayfa görünür ve giriş yapılmışsa kontrol et
+  if (document.visibilityState === 'visible' && state.cloudId && state.password) {
+    // Listener 90 saniyedir veri getirmediyse manuel çek
+    if (state._lastSnapAt && (Date.now() - state._lastSnapAt > 90000)) {
+      manualSyncCheck();
+    }
+  }
+}, 30000);
 
 async function saveToCloud() {
   if (!state.cloudId) return;
@@ -3894,6 +3993,8 @@ $$('.nav-btn').forEach(btn => {
     if (pageId === 'history') renderHistory();
     if (pageId === 'settings') renderSettings();
     if (pageId === 'notes') {
+      // Notlar sayfasına geçişte manuel sync (mobil arka plan sorununu önle)
+      manualSyncCheck();
       // İlk girişte bugünü seç (state null ise)
       if (notesSelectedDate === null && !window._notesInitialized) {
         notesSelectedDate = todayKey();
@@ -4779,6 +4880,16 @@ function setNotesQuickDate(quickKey) {
   renderNotes();
 }
 window.setNotesQuickDate = setNotesQuickDate;
+
+// Manuel yenile butonu
+async function manualRefreshNotes() {
+  showToast('🔄 Yenileniyor...', 'success');
+  await manualSyncCheck();
+  // Listener'ı da yenile (bayatlamış olabilir)
+  setupRealtimeSync();
+  showToast('✅ Güncel', 'success');
+}
+window.manualRefreshNotes = manualRefreshNotes;
 
 function migrateOldDayNotes() {
   if (state.data._notesMigrated) return;
