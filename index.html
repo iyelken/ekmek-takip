@@ -507,6 +507,60 @@ button { cursor: pointer; }
   color: var(--accent);
 }
 
+/* === HOLIDAY BANNER === */
+.holiday-banner {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.04) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+
+.holiday-banner-icon {
+  font-size: 36px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.holiday-banner-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.holiday-banner-title {
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.holiday-banner-reason {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.holiday-banner-hint {
+  font-size: 12px;
+  color: var(--text-mute);
+  line-height: 1.5;
+}
+
+.holiday-banner-hint strong {
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Holiday günde tarih display'i */
+.date-display.holiday .date-sub {
+  color: #f59e0b;
+}
+
 /* Native date input overlay - görünmez ama tıklanabilir */
 .date-picker-overlay {
   position: absolute;
@@ -1641,6 +1695,21 @@ button { cursor: pointer; }
         <button class="date-nav" onclick="changeDate(1)">›</button>
       </div>
 
+      <!-- Tatil Banner (sadece tatil günlerde görünür) -->
+      <div id="holidayBanner" class="holiday-banner" style="display:none">
+        <div class="holiday-banner-icon">🏖️</div>
+        <div class="holiday-banner-content">
+          <div class="holiday-banner-title">Bugün Okul Kapalı</div>
+          <div class="holiday-banner-reason" id="holidayReason">—</div>
+          <div class="holiday-banner-hint">
+            Veri girişine kapalı. Sonraki açık güne geçmek için <strong>›</strong> butonuna basabilir veya tarih seçicisinden başka bir gün seçebilirsin.
+          </div>
+        </div>
+      </div>
+
+      <!-- Günlük İçerik (tatilde gizlenir) -->
+      <div id="dayContent">
+
       <!-- Sandviç Ekmeği Hesap -->
       <div class="section">
         <div class="section-header">
@@ -1740,6 +1809,8 @@ button { cursor: pointer; }
           </div>
         </div>
       </div>
+
+      </div><!-- /dayContent -->
     </div>
 
     <!-- PAGE: REPORTS (Raporlar) -->
@@ -1898,6 +1969,33 @@ button { cursor: pointer; }
           </div>
           <button class="btn btn-secondary btn-sm" onclick="document.getElementById('restoreFile').click()">📤 Yükle</button>
           <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreBackup(event)">
+        </div>
+      </div>
+
+      <!-- Tatil Yönetimi (sadece patron) -->
+      <div class="settings-section" id="holidaySection">
+        <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:12px">
+          <div class="setting-label">
+            <div class="name">📅 Okul Tatil Günleri</div>
+            <div class="desc">
+              Otomatik: <strong>Cumartesi-Pazar</strong> + <strong>Resmi tatiller</strong> + <strong>Dini bayramlar</strong> kapalı sayılır.<br>
+              Manuel ekle: Ara tatil, mahalli tatiller, kar tatili gibi özel günleri buradan ekleyebilirsin.
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+            <div style="flex:1;min-width:140px">
+              <label class="form-label">Tatil Tarihi</label>
+              <input type="date" class="form-input" id="newHolidayDate">
+            </div>
+            <div style="flex:2;min-width:160px">
+              <label class="form-label">Açıklama</label>
+              <input type="text" class="form-input" id="newHolidayName" placeholder="Örn: Ara Tatil, Kar Tatili">
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="addManualHoliday()" style="height:42px">+ Ekle</button>
+          </div>
+
+          <div id="manualHolidayList" style="margin-top:6px"></div>
         </div>
       </div>
 
@@ -2108,6 +2206,7 @@ const state = {
   data: {
     products: [],          // [{id, name, price, emoji, usesBread, order}]
     days: {},              // {'2026-04-28': {breadPrev, breadIn, breadLeft, items: {productId: {prep, left, sold}}, notes, notesAuthor, notesUpdated}}
+    holidays: [],          // ['2026-05-01', '2026-04-23', ...] - manuel + otomatik tatiller
     passwords: {           // hashed passwords
       patron: null,
       staff: null
@@ -2496,6 +2595,7 @@ function enterApp() {
   if (state.role === 'staff') {
     $('productManagerSection').style.display = 'none';
     $('passwordSection').style.display = 'none';
+    $('holidaySection').style.display = 'none';
     $('navReports').style.display = 'none';
     $('totalCard').classList.add('staff-blur');
   } else {
@@ -2760,11 +2860,10 @@ function getCurrentDay() {
 }
 
 function getYesterdayBreadLeft(currentDateIso) {
-  // Bir önceki gün varsa onun breadLeft değerini döndür
-  const d = new Date(currentDateIso + 'T12:00:00');
-  d.setDate(d.getDate() - 1);
-  const yesterdayIso = isoFromDate(d);
-  const yesterday = state.data.days[yesterdayIso];
+  // Bir önceki AÇIK günü bul (tatilleri atla) ve onun breadLeft değerini döndür
+  const prevOpenDay = getPreviousOpenDay(currentDateIso);
+  if (!prevOpenDay) return null;
+  const yesterday = state.data.days[prevOpenDay];
   if (yesterday && yesterday.breadLeft != null) {
     return yesterday.breadLeft;
   }
@@ -2790,6 +2889,106 @@ function isoFromDate(d) {
   const m = ('0' + (d.getMonth() + 1)).slice(-2);
   const day = ('0' + d.getDate()).slice(-2);
   return y + '-' + m + '-' + day;
+}
+
+// === HOLIDAYS / TATİL SİSTEMİ ===
+// Türkiye sabit resmi tatilleri (her yıl tekrar eder)
+const FIXED_HOLIDAYS = [
+  { month: 1, day: 1, name: 'Yılbaşı' },
+  { month: 4, day: 23, name: 'Ulusal Egemenlik ve Çocuk Bayramı' },
+  { month: 5, day: 1, name: 'Emek ve Dayanışma Günü' },
+  { month: 5, day: 19, name: 'Atatürk\'ü Anma, Gençlik ve Spor Bayramı' },
+  { month: 7, day: 15, name: 'Demokrasi ve Milli Birlik Günü' },
+  { month: 8, day: 30, name: 'Zafer Bayramı' },
+  { month: 10, day: 29, name: 'Cumhuriyet Bayramı' }
+];
+
+// Hareketli dini bayramlar (yıllık girilmesi gerekir - manuel tatil olarak eklenebilir)
+// Yaklaşık olarak (kesin tarihler resmi takvimle değişebilir)
+const RELIGIOUS_HOLIDAYS = {
+  2025: [
+    { date: '2025-03-30', name: 'Ramazan Bayramı 1.Gün (Yarım)' },
+    { date: '2025-03-31', name: 'Ramazan Bayramı 1.Gün' },
+    { date: '2025-04-01', name: 'Ramazan Bayramı 2.Gün' },
+    { date: '2025-04-02', name: 'Ramazan Bayramı 3.Gün' },
+    { date: '2025-06-06', name: 'Kurban Bayramı 1.Gün (Yarım)' },
+    { date: '2025-06-07', name: 'Kurban Bayramı 1.Gün' },
+    { date: '2025-06-08', name: 'Kurban Bayramı 2.Gün' },
+    { date: '2025-06-09', name: 'Kurban Bayramı 3.Gün' },
+    { date: '2025-06-10', name: 'Kurban Bayramı 4.Gün' }
+  ],
+  2026: [
+    { date: '2026-03-19', name: 'Ramazan Bayramı 1.Gün (Yarım)' },
+    { date: '2026-03-20', name: 'Ramazan Bayramı 1.Gün' },
+    { date: '2026-03-21', name: 'Ramazan Bayramı 2.Gün' },
+    { date: '2026-03-22', name: 'Ramazan Bayramı 3.Gün' },
+    { date: '2026-05-26', name: 'Kurban Bayramı 1.Gün (Yarım)' },
+    { date: '2026-05-27', name: 'Kurban Bayramı 1.Gün' },
+    { date: '2026-05-28', name: 'Kurban Bayramı 2.Gün' },
+    { date: '2026-05-29', name: 'Kurban Bayramı 3.Gün' },
+    { date: '2026-05-30', name: 'Kurban Bayramı 4.Gün' }
+  ],
+  2027: [
+    { date: '2027-03-09', name: 'Ramazan Bayramı 1.Gün (Yarım)' },
+    { date: '2027-03-10', name: 'Ramazan Bayramı 1.Gün' },
+    { date: '2027-03-11', name: 'Ramazan Bayramı 2.Gün' },
+    { date: '2027-03-12', name: 'Ramazan Bayramı 3.Gün' },
+    { date: '2027-05-16', name: 'Kurban Bayramı 1.Gün (Yarım)' },
+    { date: '2027-05-17', name: 'Kurban Bayramı 1.Gün' },
+    { date: '2027-05-18', name: 'Kurban Bayramı 2.Gün' },
+    { date: '2027-05-19', name: 'Kurban Bayramı 3.Gün' },
+    { date: '2027-05-20', name: 'Kurban Bayramı 4.Gün' }
+  ]
+};
+
+// Bir günün tatil olup olmadığını kontrol et
+// Returns: { isHoliday: bool, reason: string, type: 'weekend'|'official'|'religious'|'manual' }
+function getHolidayInfo(iso) {
+  const d = new Date(iso + 'T12:00:00');
+  const day = d.getDay(); // 0=Pazar, 6=Cumartesi
+  
+  // Hafta sonu kontrolü
+  if (day === 0) return { isHoliday: true, reason: 'Pazar', type: 'weekend' };
+  if (day === 6) return { isHoliday: true, reason: 'Cumartesi', type: 'weekend' };
+  
+  // Manuel eklenmiş tatil mi?
+  const manualList = (state.data.holidays || []);
+  const manualMatch = manualList.find(h => (typeof h === 'string' ? h : h.date) === iso);
+  if (manualMatch) {
+    const name = typeof manualMatch === 'string' ? 'Tatil' : (manualMatch.name || 'Tatil');
+    return { isHoliday: true, reason: name, type: 'manual' };
+  }
+  
+  // Sabit resmi tatil mi?
+  const month = d.getMonth() + 1;
+  const dayOfMonth = d.getDate();
+  const fixed = FIXED_HOLIDAYS.find(h => h.month === month && h.day === dayOfMonth);
+  if (fixed) return { isHoliday: true, reason: fixed.name, type: 'official' };
+  
+  // Dini bayram mı?
+  const year = d.getFullYear();
+  const religious = RELIGIOUS_HOLIDAYS[year];
+  if (religious) {
+    const r = religious.find(h => h.date === iso);
+    if (r) return { isHoliday: true, reason: r.name, type: 'religious' };
+  }
+  
+  return { isHoliday: false };
+}
+
+function isHoliday(iso) {
+  return getHolidayInfo(iso).isHoliday;
+}
+
+// Bir önceki AÇIK günü bul (tatilleri atla)
+function getPreviousOpenDay(iso) {
+  const d = new Date(iso + 'T12:00:00');
+  for (let i = 0; i < 14; i++) { // Max 14 gün geriye git
+    d.setDate(d.getDate() - 1);
+    const checkIso = isoFromDate(d);
+    if (!isHoliday(checkIso)) return checkIso;
+  }
+  return null; // 14 gün boyunca açık gün bulunamadı (olağandışı)
 }
 
 function changeDate(delta) {
@@ -2821,6 +3020,34 @@ function renderToday() {
   $('dateSub').textContent = getDayName(state.currentDate);
   $('datePicker').value = state.currentDate;
   $('dateDisplay').classList.toggle('today', state.currentDate === todayKey());
+  
+  // Tatil kontrolü
+  const holidayInfo = getHolidayInfo(state.currentDate);
+  $('dateDisplay').classList.toggle('holiday', holidayInfo.isHoliday);
+  
+  if (holidayInfo.isHoliday) {
+    // Tatilde: banner göster, içeriği gizle
+    $('holidayBanner').style.display = 'flex';
+    $('dayContent').style.display = 'none';
+    
+    // Tatil sebebini detaylandır
+    let reasonText = holidayInfo.reason;
+    if (holidayInfo.type === 'weekend') {
+      reasonText = holidayInfo.reason + ' · Hafta Sonu';
+    } else if (holidayInfo.type === 'official') {
+      reasonText = '🇹🇷 Resmi Tatil: ' + holidayInfo.reason;
+    } else if (holidayInfo.type === 'religious') {
+      reasonText = '🌙 Dini Bayram: ' + holidayInfo.reason;
+    } else if (holidayInfo.type === 'manual') {
+      reasonText = '📌 ' + holidayInfo.reason;
+    }
+    $('holidayReason').textContent = reasonText;
+    return;
+  }
+  
+  // Normal gün: banner gizle, içeriği göster
+  $('holidayBanner').style.display = 'none';
+  $('dayContent').style.display = 'block';
 
   const day = getCurrentDay();
 
@@ -3646,7 +3873,115 @@ function renderSettings() {
       </div>
     </div>
   `).join('') || '<div class="empty-state"><p>Ürün yok</p></div>';
+
+  // Manuel tatilleri render et
+  renderManualHolidays();
 }
+
+// === MANUEL TATİL YÖNETİMİ ===
+function renderManualHolidays() {
+  const container = $('manualHolidayList');
+  if (!container) return;
+  
+  const holidays = (state.data.holidays || []).slice();
+  // Sırala: tarihe göre (yeni en üstte)
+  holidays.sort((a, b) => {
+    const da = typeof a === 'string' ? a : a.date;
+    const db = typeof b === 'string' ? b : b.date;
+    return db.localeCompare(da);
+  });
+
+  if (holidays.length === 0) {
+    container.innerHTML = '<div style="padding:12px;background:var(--bg-2);border-radius:8px;color:var(--text-mute);font-size:12px;text-align:center">Henüz manuel tatil eklenmedi</div>';
+    return;
+  }
+
+  container.innerHTML = '<div style="font-size:11px;color:var(--text-mute);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:6px">EKLİ TATİLLER (' + holidays.length + ')</div>' +
+    holidays.map(h => {
+      const date = typeof h === 'string' ? h : h.date;
+      const name = typeof h === 'string' ? 'Tatil' : (h.name || 'Tatil');
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;gap:10px">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px">${formatDate(date)} · ${getDayName(date)}</div>
+            <div style="font-size:11px;color:var(--text-mute);margin-top:2px">${escapeHtml(name)}</div>
+          </div>
+          <button class="icon-btn danger" onclick="removeManualHoliday('${date}')" title="Sil" style="flex-shrink:0">🗑️</button>
+        </div>`;
+    }).join('');
+}
+
+function addManualHoliday() {
+  if (state.role !== 'patron') {
+    showToast('Bu işlem için yetkin yok', 'error');
+    return;
+  }
+  
+  const date = $('newHolidayDate').value;
+  const name = $('newHolidayName').value.trim() || 'Tatil';
+  
+  if (!date) {
+    showToast('Lütfen bir tarih seç', 'warning');
+    return;
+  }
+  
+  // Otomatik tatilleri uyarı olarak göster
+  const info = getHolidayInfo(date);
+  if (info.isHoliday && info.type !== 'manual') {
+    if (!confirm('Bu gün zaten otomatik tatil:\n' + info.reason + '\n\nYine de manuel olarak ekleyeyim mi?')) {
+      return;
+    }
+  }
+  
+  // Aynı tarih daha önce eklenmişse
+  const existing = (state.data.holidays || []).find(h => (typeof h === 'string' ? h : h.date) === date);
+  if (existing) {
+    showToast('Bu tarih zaten ekli', 'warning');
+    return;
+  }
+  
+  if (!state.data.holidays) state.data.holidays = [];
+  state.data.holidays.push({ date, name });
+  
+  // Form temizle
+  $('newHolidayDate').value = '';
+  $('newHolidayName').value = '';
+  
+  // Render ve kaydet
+  renderManualHolidays();
+  scheduleSave();
+  showToast('✅ Tatil eklendi: ' + formatDate(date), 'success');
+  
+  // Eğer mevcut açık olan gün bu tarihse, today'i de yenile
+  if (date === state.currentDate) {
+    renderToday();
+  }
+}
+
+function removeManualHoliday(date) {
+  if (state.role !== 'patron') {
+    showToast('Bu işlem için yetkin yok', 'error');
+    return;
+  }
+  
+  if (!confirm(formatDate(date) + ' tatili kaldırılsın mı?')) return;
+  
+  state.data.holidays = (state.data.holidays || []).filter(h => 
+    (typeof h === 'string' ? h : h.date) !== date
+  );
+  
+  renderManualHolidays();
+  scheduleSave();
+  showToast('🗑️ Tatil kaldırıldı', 'success');
+  
+  if (date === state.currentDate) {
+    renderToday();
+  }
+}
+
+window.addManualHoliday = addManualHoliday;
+window.removeManualHoliday = removeManualHoliday;
+
 
 function openProductEditor() {
   state.pendingProductEdit = null;
