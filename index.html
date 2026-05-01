@@ -1156,97 +1156,32 @@ button { cursor: pointer; }
   border-color: #ef4444;
 }
 
-/* Mesaj kartı */
+/* === MESAJ KARTI (WhatsApp tarzı) === */
 .message-card {
   background: var(--bg-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 14px;
-  margin-bottom: 10px;
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
   position: relative;
-  transition: border-color 0.2s;
-  display: flex;
-  gap: 12px;
-  align-items: stretch;
+  transition: background 0.15s;
 }
 
-.message-body-wrapper {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
+.message-card:hover {
+  background: var(--surface-2);
 }
 
-/* === TAKVİM YAPRAĞI (Date Chip) === */
-.date-chip {
-  flex-shrink: 0;
-  width: 52px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  font-family: 'Fraunces', serif;
-  text-align: center;
-  align-self: flex-start;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.date-chip-month {
-  background: linear-gradient(135deg, var(--accent), #ea7c00);
-  color: var(--bg);
-  font-size: 10px;
-  font-weight: 800;
-  padding: 3px 0;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  line-height: 1.2;
-  font-family: 'Manrope', sans-serif;
-}
-
-.date-chip-day {
-  font-size: 22px;
-  font-weight: 700;
-  padding: 6px 0 4px;
-  color: var(--text);
-  line-height: 1;
-}
-
-.date-chip-weekday {
-  font-size: 9px;
-  font-weight: 600;
-  color: var(--text-mute);
-  padding: 0 0 5px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-family: 'Manrope', sans-serif;
-}
-
-/* Tatil ise sarı kontur */
-.date-chip.is-today .date-chip-month {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-}
-
-/* Mesaj başlık satırı (avatar+isim+badge'ler) artık body-wrapper içinde */
-
+/* Önemlilik - sol kenar çizgisi - sade */
 .message-card.priority-urgent {
-  border-left: 4px solid #ef4444;
-  background: linear-gradient(90deg, rgba(239, 68, 68, 0.06), var(--bg-2) 30%);
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.10), var(--bg-2) 40%);
 }
 
 .message-card.priority-info {
-  border-left: 4px solid #60a5fa;
+  background: linear-gradient(90deg, rgba(96, 165, 250, 0.08), var(--bg-2) 40%);
 }
 
-.message-card.is-task:not(.task-done) {
-  border-left: 4px solid var(--accent);
-}
-
+/* Görev tamamlandı - solgun */
 .message-card.task-done {
-  opacity: 0.6;
-  background: var(--bg);
+  opacity: 0.55;
 }
 
 .message-card.task-done .message-text {
@@ -1254,36 +1189,23 @@ button { cursor: pointer; }
   color: var(--text-mute);
 }
 
-.message-card.reminder-active {
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.08), var(--bg-2) 30%);
-  border-color: rgba(245, 158, 11, 0.4);
-}
-
+/* Hatırlatma vadesi gelmiş - turuncu vurgu */
 .message-card.reminder-due {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), var(--bg-2));
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.12), var(--bg-2) 40%);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
+/* Üst satır: avatar + isim + saat + ⋮ */
 .message-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.message-author {
-  display: flex;
-  align-items: center;
   gap: 8px;
-  flex: 1;
-  min-width: 0;
+  margin-bottom: 4px;
 }
 
 .author-avatar {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--accent), #ea7c00);
   color: var(--bg);
@@ -1291,65 +1213,129 @@ button { cursor: pointer; }
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12px;
   flex-shrink: 0;
 }
 
 .author-info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .author-name {
   font-weight: 600;
   font-size: 13px;
   color: var(--text);
-  line-height: 1.2;
 }
 
 .message-time {
   font-size: 11px;
   color: var(--text-mute);
-  margin-top: 1px;
+  font-weight: 400;
 }
 
-.message-badges {
+/* Sağ üstte küçük ikonlar (öncelik ikonu + ⋮ menü) */
+.message-quick-icons {
   display: flex;
-  gap: 4px;
   align-items: center;
+  gap: 4px;
   flex-shrink: 0;
 }
 
-.message-badge {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  white-space: nowrap;
+.priority-icon {
+  font-size: 12px;
+  opacity: 0.8;
 }
 
-.badge-urgent { background: #ef4444; color: white; }
-.badge-info { background: #60a5fa; color: white; }
-.badge-task { background: var(--accent); color: var(--bg); }
-.badge-reminder { background: #fbbf24; color: var(--bg); }
-.badge-done { background: #22c55e; color: white; }
-.badge-overdue { background: #dc2626; color: white; animation: pulseBadge 1.5s infinite; }
-
-@keyframes pulseBadge {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+/* ⋮ menü butonu */
+.message-menu-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--text-mute);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  font-family: inherit;
+  line-height: 1;
 }
 
-/* Yanıtlanan mesaj göstergesi (kart içinde) */
+.message-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+
+/* Dropdown menü */
+.message-menu {
+  position: absolute;
+  top: 36px;
+  right: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+  min-width: 140px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 50;
+  display: none;
+  flex-direction: column;
+}
+
+.message-menu.show {
+  display: flex;
+  animation: menuFadeIn 0.15s ease-out;
+}
+
+@keyframes menuFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message-menu-item {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.message-menu-item:hover {
+  background: var(--bg-2);
+}
+
+.message-menu-item.danger {
+  color: #f87171;
+}
+
+.message-menu-item.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Yanıtlanan mesaj alıntısı */
 .reply-quote {
   background: rgba(255, 255, 255, 0.04);
-  border-left: 3px solid var(--text-mute);
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin-bottom: 8px;
-  font-size: 12px;
+  border-left: 2px solid var(--accent);
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  font-size: 11px;
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -1361,24 +1347,24 @@ button { cursor: pointer; }
 .reply-quote-author {
   color: var(--accent);
   font-weight: 600;
-  font-size: 11px;
-  margin-bottom: 2px;
+  font-size: 10px;
 }
 
 .reply-quote-text {
   color: var(--text-mute);
-  font-style: italic;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* Mesaj metni */
 .message-text {
   font-size: 14px;
   color: var(--text);
-  line-height: 1.5;
+  line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
+  padding-left: 36px; /* avatarın hizasıyla uyumlu */
 }
 
 .message-text mark {
@@ -1388,33 +1374,43 @@ button { cursor: pointer; }
   border-radius: 3px;
 }
 
+/* Hatırlatma satırı - mesaj altında küçük metin */
 .message-reminder-info {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 6px 10px;
-  background: rgba(245, 158, 11, 0.08);
-  border-radius: 6px;
-  font-size: 12px;
+  gap: 4px;
+  margin-top: 4px;
+  margin-left: 36px;
+  font-size: 11px;
   color: var(--accent);
+  font-weight: 500;
+}
+
+.message-reminder-info.is-overdue {
+  color: #f87171;
   font-weight: 600;
 }
 
-.message-actions {
-  display: flex;
-  gap: 6px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px dashed var(--border);
-  flex-wrap: wrap;
+/* Tamamlanmış görevde hatırlatma solgun */
+.message-card.task-done .message-reminder-info {
+  opacity: 0.7;
+  text-decoration: line-through;
 }
 
-.message-action-btn {
+/* Görev tamamla butonu - mesaj altında, küçük */
+.task-action-row {
+  margin-top: 6px;
+  margin-left: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-toggle-btn {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-dim);
-  padding: 6px 10px;
+  padding: 5px 10px;
   border-radius: 6px;
   font-size: 12px;
   cursor: pointer;
@@ -1422,48 +1418,35 @@ button { cursor: pointer; }
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  font-weight: 600;
   transition: all 0.15s;
 }
 
-.message-action-btn:hover {
-  background: var(--bg);
-  color: var(--text);
-  border-color: var(--accent);
-}
-
-.message-action-btn.task-toggle {
-  flex: 1;
-  justify-content: center;
-  font-weight: 600;
-}
-
-.message-action-btn.task-toggle.done {
-  background: #22c55e;
-  color: white;
-  border-color: #22c55e;
-}
-
-.message-action-btn.task-toggle:not(.done) {
+.task-toggle-btn:not(.done) {
   background: var(--accent);
   color: var(--bg);
   border-color: var(--accent);
 }
 
-.message-action-btn.danger:hover {
-  background: #ef4444;
-  color: white;
-  border-color: #ef4444;
+.task-toggle-btn.done {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.3);
 }
 
-/* Düzenlendi etiketi */
+.task-done-info {
+  font-size: 11px;
+  color: #22c55e;
+}
+
+/* Düzenlendi etiketi - sade */
 .edited-tag {
   font-size: 10px;
   color: var(--text-mute);
   font-style: italic;
-  margin-left: 6px;
 }
 
-/* Inline edit form */
+/* Inline edit form (aynı kalsın) */
 .message-edit-form {
   margin-top: 8px;
   padding: 12px;
@@ -4460,26 +4443,38 @@ function renderMessageCard(m, highlight, todayIso) {
   const classes = ['message-card'];
   if (m.priority === 'urgent') classes.push('priority-urgent');
   if (m.priority === 'info') classes.push('priority-info');
-  if (m.isTask) {
-    classes.push('is-task');
-    if (m.doneAt) classes.push('task-done');
-  }
+  if (m.isTask && m.doneAt) classes.push('task-done');
   
   // Reminder durumu
   let reminderHtml = '';
   if (m.reminderDate) {
-    const isDue = m.reminderDate <= todayIso && (!m.isTask || !m.doneAt);
     const isPast = m.reminderDate < todayIso;
+    const isToday = m.reminderDate === todayIso;
+    const isDue = (isPast || isToday) && (!m.isTask || !m.doneAt);
+    
     if (isDue) classes.push('reminder-due');
-    else classes.push('reminder-active');
     
-    const dateLabel = formatDate(m.reminderDate);
     let icon = '📅';
-    let text = dateLabel + ' · ' + getDayName(m.reminderDate);
-    if (m.reminderDate === todayIso) { icon = '🔔'; text = 'BUGÜN: ' + dateLabel; }
-    else if (isPast && !m.doneAt) { icon = '⏰'; text = 'Geçmiş: ' + dateLabel; }
+    let text = formatDate(m.reminderDate);
+    let infoClass = '';
     
-    reminderHtml = '<div class="message-reminder-info">' + icon + ' ' + text + '</div>';
+    if (isToday) { 
+      icon = '🔔'; 
+      text = 'Bugün'; 
+    } else if (isPast && !m.doneAt) { 
+      icon = '⏰'; 
+      text = 'Gecikti: ' + text;
+      infoClass = 'is-overdue';
+    } else {
+      // Gelecek
+      const dDate = new Date(m.reminderDate + 'T12:00:00');
+      const days = Math.ceil((dDate - new Date(todayIso + 'T12:00:00')) / 86400000);
+      if (days === 1) text = 'Yarın';
+      else if (days > 1 && days <= 7) text = days + ' gün sonra';
+      else text = formatDate(m.reminderDate);
+    }
+    
+    reminderHtml = '<div class="message-reminder-info ' + infoClass + '">' + icon + ' ' + text + '</div>';
   }
 
   // Yanıt göstergesi
@@ -4487,90 +4482,66 @@ function renderMessageCard(m, highlight, todayIso) {
   if (m.replyTo) {
     const original = (state.data.messages || []).find(x => x.id === m.replyTo);
     if (original) {
-      const preview = (original.text || '').slice(0, 80);
+      const preview = (original.text || '').slice(0, 60);
       replyHtml = '<div class="reply-quote" onclick="scrollToMessage(\'' + m.replyTo + '\')">' +
         '<div class="reply-quote-author">↩️ ' + escapeHtml(original.author || '?') + '</div>' +
-        '<div class="reply-quote-text">' + escapeHtml(preview) + (original.text.length > 80 ? '...' : '') + '</div>' +
+        '<div class="reply-quote-text">' + escapeHtml(preview) + (original.text.length > 60 ? '...' : '') + '</div>' +
         '</div>';
     }
   }
 
-  // Badge'ler
-  const badges = [];
-  if (m.priority === 'urgent') badges.push('<span class="message-badge badge-urgent">🔴 Acil</span>');
-  if (m.priority === 'info') badges.push('<span class="message-badge badge-info">💬 Bilgi</span>');
-  if (m.isTask && m.doneAt) badges.push('<span class="message-badge badge-done">✓ Tamam</span>');
-  if (m.reminderDate && m.reminderDate < todayIso && (!m.isTask || !m.doneAt)) {
-    badges.push('<span class="message-badge badge-overdue">⏰ Geçmiş</span>');
-  }
+  // Önemlilik ikonu (sağ üst köşe, sade)
+  let priorityIcon = '';
+  if (m.priority === 'urgent') priorityIcon = '<span class="priority-icon" title="Acil">🔴</span>';
+  else if (m.priority === 'info') priorityIcon = '<span class="priority-icon" title="Bilgi">💬</span>';
 
-  // Aksiyonlar
-  const actions = [];
+  // Görev tamamlama satırı
+  let taskRow = '';
   if (m.isTask) {
     if (m.doneAt) {
-      actions.push('<button class="message-action-btn task-toggle done" onclick="toggleTask(\'' + m.id + '\')">✓ Yapıldı</button>');
+      const doneBy = m.doneBy ? escapeHtml(m.doneBy) + ' · ' : '';
+      taskRow = '<div class="task-action-row">' +
+        '<button class="task-toggle-btn done" onclick="toggleTask(\'' + m.id + '\')">✓ Yapıldı</button>' +
+        '<span class="task-done-info">' + doneBy + formatRelativeTime(m.doneAt) + '</span>' +
+        '</div>';
     } else {
-      actions.push('<button class="message-action-btn task-toggle" onclick="toggleTask(\'' + m.id + '\')">⬜ Tamamla</button>');
+      taskRow = '<div class="task-action-row">' +
+        '<button class="task-toggle-btn" onclick="toggleTask(\'' + m.id + '\')">⬜ Tamamla</button>' +
+        '</div>';
     }
-  }
-  actions.push('<button class="message-action-btn" onclick="startReply(\'' + m.id + '\')">↩️ Yanıtla</button>');
-  actions.push('<button class="message-action-btn" onclick="startEditMessage(\'' + m.id + '\')">✏️ Düzenle</button>');
-  actions.push('<button class="message-action-btn danger" onclick="deleteNote(\'' + m.id + '\')">🗑️</button>');
-
-  let doneInfo = '';
-  if (m.isTask && m.doneAt && m.doneBy) {
-    doneInfo = '<div style="font-size:11px;color:#22c55e;margin-top:6px">✓ ' + escapeHtml(m.doneBy) + ' tamamladı · ' + formatRelativeTime(m.doneAt) + '</div>';
   }
 
   // Düzenlendi etiketi
   let editedTag = '';
   if (m.editedAt) {
-    editedTag = '<span class="edited-tag" title="' + new Date(m.editedAt).toLocaleString('tr-TR') + '">(düzenlendi)</span>';
+    editedTag = ' <span class="edited-tag" title="' + new Date(m.editedAt).toLocaleString('tr-TR') + '">(düzenlendi)</span>';
   }
 
-  // === TAKVİM YAPRAĞI ===
-  // Hangi tarih gösterilsin? 
-  // - Hatırlatma varsa: hatırlatma tarihi
-  // - Yoksa: oluşturma tarihi
-  let chipDateIso;
-  if (m.reminderDate) {
-    chipDateIso = m.reminderDate;
-  } else {
-    chipDateIso = isoFromDate(new Date(m.createdAt));
-  }
-  
-  const chipDate = new Date(chipDateIso + 'T12:00:00');
-  const monthShort = chipDate.toLocaleDateString('tr-TR', { month: 'short' }).replace('.', '').toUpperCase();
-  const dayNum = chipDate.getDate();
-  const weekday = chipDate.toLocaleDateString('tr-TR', { weekday: 'short' }).replace('.', '');
-  const isToday = chipDateIso === todayIso;
-  
-  const dateChipHtml = 
-    '<div class="date-chip ' + (isToday ? 'is-today' : '') + '" title="' + formatDate(chipDateIso) + '">' +
-      '<div class="date-chip-month">' + monthShort + '</div>' +
-      '<div class="date-chip-day">' + dayNum + '</div>' +
-      '<div class="date-chip-weekday">' + weekday + '</div>' +
+  // ⋮ Menü
+  const menuHtml = 
+    '<div class="message-quick-icons">' +
+      priorityIcon +
+      '<button class="message-menu-btn" onclick="toggleMessageMenu(event, \'' + m.id + '\')" title="Daha fazla">⋮</button>' +
+      '<div class="message-menu" id="menu-' + m.id + '">' +
+        '<button class="message-menu-item" onclick="startReply(\'' + m.id + '\'); closeAllMenus();">↩️ Yanıtla</button>' +
+        '<button class="message-menu-item" onclick="startEditMessage(\'' + m.id + '\'); closeAllMenus();">✏️ Düzenle</button>' +
+        '<button class="message-menu-item danger" onclick="deleteNote(\'' + m.id + '\'); closeAllMenus();">🗑️ Sil</button>' +
+      '</div>' +
     '</div>';
 
   return '<div class="' + classes.join(' ') + '" id="msg-' + m.id + '">' +
-    dateChipHtml +
-    '<div class="message-body-wrapper">' +
-      '<div class="message-header">' +
-        '<div class="message-author">' +
-          '<div class="author-avatar">' + initial + '</div>' +
-          '<div class="author-info">' +
-            '<div class="author-name">' + escapeHtml(author) + editedTag + '</div>' +
-            '<div class="message-time">' + time + '</div>' +
-          '</div>' +
-        '</div>' +
-        (badges.length > 0 ? '<div class="message-badges">' + badges.join('') + '</div>' : '') +
+    '<div class="message-header">' +
+      '<div class="author-avatar">' + initial + '</div>' +
+      '<div class="author-info">' +
+        '<span class="author-name">' + escapeHtml(author) + '</span>' +
+        '<span class="message-time">' + time + editedTag + '</span>' +
       '</div>' +
-      replyHtml +
-      '<div class="message-text">' + highlight(m.text) + '</div>' +
-      reminderHtml +
-      doneInfo +
-      '<div class="message-actions">' + actions.join('') + '</div>' +
+      menuHtml +
     '</div>' +
+    replyHtml +
+    '<div class="message-text">' + highlight(m.text) + '</div>' +
+    reminderHtml +
+    taskRow +
   '</div>';
 }
 
@@ -4579,52 +4550,35 @@ function renderMessageEditForm(m) {
   const author = m.author || 'Bilinmeyen';
   const initial = author.charAt(0).toUpperCase();
   
-  // Form için chip date (orijinal mesajın chip'i)
-  const chipDateIso = m.reminderDate || isoFromDate(new Date(m.createdAt));
-  const chipDate = new Date(chipDateIso + 'T12:00:00');
-  const monthShort = chipDate.toLocaleDateString('tr-TR', { month: 'short' }).replace('.', '').toUpperCase();
-  const dayNum = chipDate.getDate();
-  const weekday = chipDate.toLocaleDateString('tr-TR', { weekday: 'short' }).replace('.', '');
-  
-  const priorityLabels = { info: '💬 Bilgi', normal: '📝 Normal', urgent: '🔴 Acil' };
-  
-  return '<div class="message-card" id="msg-' + m.id + '" style="border-color:var(--accent);background:rgba(245,158,11,0.05)">' +
-    '<div class="date-chip">' +
-      '<div class="date-chip-month">' + monthShort + '</div>' +
-      '<div class="date-chip-day">' + dayNum + '</div>' +
-      '<div class="date-chip-weekday">' + weekday + '</div>' +
-    '</div>' +
-    '<div class="message-body-wrapper">' +
-      '<div class="message-header">' +
-        '<div class="message-author">' +
-          '<div class="author-avatar">' + initial + '</div>' +
-          '<div class="author-info">' +
-            '<div class="author-name">' + escapeHtml(author) + ' <span style="color:var(--accent);font-size:11px">✏️ Düzenleniyor</span></div>' +
-          '</div>' +
-        '</div>' +
+  return '<div class="message-card" id="msg-' + m.id + '" style="background:rgba(245,158,11,0.06);box-shadow:inset 3px 0 0 var(--accent)">' +
+    '<div class="message-header">' +
+      '<div class="author-avatar">' + initial + '</div>' +
+      '<div class="author-info">' +
+        '<span class="author-name">' + escapeHtml(author) + '</span>' +
+        '<span class="message-time" style="color:var(--accent);font-weight:600">✏️ Düzenleniyor</span>' +
       '</div>' +
-      '<div class="message-edit-form">' +
-        '<textarea class="message-edit-textarea" id="editTextarea-' + m.id + '">' + escapeHtml(m.text || '') + '</textarea>' +
-        '<div class="message-edit-options">' +
-          '<select id="editPriority-' + m.id + '" class="form-input" style="width:auto;height:36px;padding:4px 10px">' +
-            '<option value="info"' + (m.priority === 'info' ? ' selected' : '') + '>💬 Bilgi</option>' +
-            '<option value="normal"' + (m.priority === 'normal' ? ' selected' : '') + '>📝 Normal</option>' +
-            '<option value="urgent"' + (m.priority === 'urgent' ? ' selected' : '') + '>🔴 Acil</option>' +
-          '</select>' +
-          '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--bg-2);padding:6px 10px;border-radius:6px;border:1px solid var(--border)">' +
-            '<input type="checkbox" id="editIsTask-' + m.id + '"' + (m.isTask ? ' checked' : '') + ' style="width:16px;height:16px">' +
-            '<span>✓ Görev</span>' +
-          '</label>' +
-          '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--bg-2);padding:6px 10px;border-radius:6px;border:1px solid var(--border)">' +
-            '<input type="checkbox" id="editHasReminder-' + m.id + '"' + (m.reminderDate ? ' checked' : '') + ' style="width:16px;height:16px" onchange="toggleEditReminderDate(\'' + m.id + '\')">' +
-            '<span>📅 Tarih</span>' +
-          '</label>' +
-          '<input type="date" id="editReminderDate-' + m.id + '" class="form-input" value="' + (m.reminderDate || '') + '" style="width:auto;height:36px;padding:4px 10px;display:' + (m.reminderDate ? 'inline-block' : 'none') + '">' +
-        '</div>' +
-        '<div class="message-edit-actions">' +
-          '<button onclick="cancelEditMessage()">İptal</button>' +
-          '<button class="save-btn" onclick="saveEditMessage(\'' + m.id + '\')">💾 Kaydet</button>' +
-        '</div>' +
+    '</div>' +
+    '<div class="message-edit-form">' +
+      '<textarea class="message-edit-textarea" id="editTextarea-' + m.id + '">' + escapeHtml(m.text || '') + '</textarea>' +
+      '<div class="message-edit-options">' +
+        '<select id="editPriority-' + m.id + '" class="form-input" style="width:auto;height:36px;padding:4px 10px">' +
+          '<option value="info"' + (m.priority === 'info' ? ' selected' : '') + '>💬 Bilgi</option>' +
+          '<option value="normal"' + (m.priority === 'normal' ? ' selected' : '') + '>📝 Normal</option>' +
+          '<option value="urgent"' + (m.priority === 'urgent' ? ' selected' : '') + '>🔴 Acil</option>' +
+        '</select>' +
+        '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--bg-2);padding:6px 10px;border-radius:6px;border:1px solid var(--border)">' +
+          '<input type="checkbox" id="editIsTask-' + m.id + '"' + (m.isTask ? ' checked' : '') + ' style="width:16px;height:16px">' +
+          '<span>✓ Görev</span>' +
+        '</label>' +
+        '<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--bg-2);padding:6px 10px;border-radius:6px;border:1px solid var(--border)">' +
+          '<input type="checkbox" id="editHasReminder-' + m.id + '"' + (m.reminderDate ? ' checked' : '') + ' style="width:16px;height:16px" onchange="toggleEditReminderDate(\'' + m.id + '\')">' +
+          '<span>📅 Tarih</span>' +
+        '</label>' +
+        '<input type="date" id="editReminderDate-' + m.id + '" class="form-input" value="' + (m.reminderDate || '') + '" style="width:auto;height:36px;padding:4px 10px;display:' + (m.reminderDate ? 'inline-block' : 'none') + '">' +
+      '</div>' +
+      '<div class="message-edit-actions">' +
+        '<button onclick="cancelEditMessage()">İptal</button>' +
+        '<button class="save-btn" onclick="saveEditMessage(\'' + m.id + '\')">💾 Kaydet</button>' +
       '</div>' +
     '</div>' +
   '</div>';
@@ -4952,6 +4906,33 @@ function scrollToMessage(messageId) {
   setTimeout(() => { el.style.boxShadow = ''; }, 1500);
 }
 window.scrollToMessage = scrollToMessage;
+
+// === MESAJ MENÜSÜ (⋮) ===
+function toggleMessageMenu(event, messageId) {
+  event.stopPropagation();
+  const menu = $('menu-' + messageId);
+  if (!menu) return;
+  
+  const wasOpen = menu.classList.contains('show');
+  closeAllMenus();
+  if (!wasOpen) {
+    menu.classList.add('show');
+  }
+}
+window.toggleMessageMenu = toggleMessageMenu;
+
+function closeAllMenus() {
+  document.querySelectorAll('.message-menu.show').forEach(m => m.classList.remove('show'));
+}
+window.closeAllMenus = closeAllMenus;
+
+// Sayfanın herhangi bir yerine tıklandığında menüleri kapat
+document.addEventListener('click', (e) => {
+  // Eğer tıklanan menü butonu veya menü item değilse kapat
+  if (!e.target.closest('.message-menu-btn') && !e.target.closest('.message-menu')) {
+    closeAllMenus();
+  }
+});
 
 // === MESAJ DÜZENLEME ===
 function startEditMessage(messageId) {
