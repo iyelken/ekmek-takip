@@ -1018,6 +1018,89 @@ button { cursor: pointer; }
   color: var(--accent);
 }
 
+/* Note card */
+.note-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.note-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.note-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.note-card-date {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.note-card-day {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.note-card-author {
+  font-size: 11px;
+  color: var(--text-mute);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.note-card-text {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.note-card-text mark {
+  background: var(--accent);
+  color: var(--bg);
+  padding: 0 3px;
+  border-radius: 3px;
+}
+
+.note-card-time {
+  font-size: 10px;
+  color: var(--text-mute);
+  margin-top: 6px;
+  text-align: right;
+}
+
+/* Day row note badge */
+.day-row-note-badge {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 4px;
+  font-weight: 700;
+  margin-left: 6px;
+}
+
 /* ========== SETTINGS ========== */
 .settings-section {
   background: var(--surface);
@@ -1728,6 +1811,20 @@ button { cursor: pointer; }
       </div>
     </div>
 
+    <!-- PAGE: NOTES (Tüm Notlar) -->
+    <div id="page-notes" class="page">
+      <div class="section">
+        <div class="section-header">
+          <h3><span class="emoji">📝</span> Tüm Notlar</h3>
+          <span id="notesCount" style="font-size:12px;color:var(--text-mute);font-weight:600"></span>
+        </div>
+        <div class="section-body">
+          <input type="text" class="form-input" id="notesSearch" placeholder="🔍 Notlarda ara..." style="margin-bottom:12px" oninput="renderNotes()">
+          <div id="notesList"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- PAGE: SETTINGS -->
     <div id="page-settings" class="page">
       <!-- Account info -->
@@ -1835,6 +1932,10 @@ button { cursor: pointer; }
     <button class="nav-btn" data-page="history">
       <span class="nav-icon">📅</span>
       <span>Geçmiş</span>
+    </button>
+    <button class="nav-btn" data-page="notes">
+      <span class="nav-icon">📝</span>
+      <span>Notlar</span>
     </button>
     <button class="nav-btn" data-page="settings">
       <span class="nav-icon">⚙️</span>
@@ -2709,6 +2810,7 @@ function renderAll() {
   renderToday();
   if ($('page-reports').classList.contains('active')) renderReports();
   if ($('page-history').classList.contains('active')) renderHistory();
+  if ($('page-notes').classList.contains('active')) renderNotes();
   if ($('page-settings').classList.contains('active')) renderSettings();
   refreshAlerts();
 }
@@ -3435,15 +3537,81 @@ function renderHistory() {
       }
     });
     const showRev = state.role === 'patron';
+    const hasNotes = day.notes && day.notes.trim().length > 0;
     return `
       <div class="day-row" onclick="openDay('${d}')">
         <div class="day-row-info">
-          <div class="day-row-date">${formatDate(d)} · ${getDayName(d)}</div>
-          <div class="day-row-meta">${items} adet ${day.notes ? '· 📝 not var' : ''}</div>
+          <div class="day-row-date">${formatDate(d)} · ${getDayName(d)}${hasNotes ? '<span class="day-row-note-badge">📝 NOT</span>' : ''}</div>
+          <div class="day-row-meta">${items} adet${hasNotes ? ' · ' + (day.notes.length > 50 ? day.notes.slice(0, 50) + '...' : day.notes) : ''}</div>
         </div>
         ${showRev ? `<div class="day-row-amount">${formatTL(rev)}</div>` : ''}
       </div>`;
   }).join('');
+}
+
+// === NOTES PAGE ===
+function renderNotes() {
+  const list = $('notesList');
+  const countEl = $('notesCount');
+  const searchEl = $('notesSearch');
+  const searchTerm = (searchEl?.value || '').toLowerCase().trim();
+
+  // Notu olan tüm günleri topla
+  const daysWithNotes = Object.keys(state.data.days || {})
+    .filter(d => {
+      const day = state.data.days[d];
+      return day.notes && day.notes.trim().length > 0;
+    })
+    .sort()
+    .reverse(); // En yeni en üstte
+
+  // Arama filtresi
+  const filtered = searchTerm
+    ? daysWithNotes.filter(d => state.data.days[d].notes.toLowerCase().includes(searchTerm))
+    : daysWithNotes;
+
+  countEl.textContent = filtered.length === daysWithNotes.length
+    ? `${filtered.length} not`
+    : `${filtered.length} / ${daysWithNotes.length}`;
+
+  if (daysWithNotes.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="emoji">📝</div><h4>Henüz not yok</h4><p>Bugün sayfasından gün notları ekleyebilirsin</p></div>';
+    return;
+  }
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="emoji">🔍</div><h4>Sonuç yok</h4><p>"' + searchTerm + '" araması ile eşleşen not bulunamadı</p></div>';
+    return;
+  }
+
+  // Highlight helper - arama terimini vurgula
+  const highlight = (text) => {
+    if (!searchTerm) return escapeHtml(text);
+    const escaped = escapeHtml(text);
+    const re = new RegExp('(' + searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    return escaped.replace(re, '<mark>$1</mark>');
+  };
+
+  list.innerHTML = filtered.map(d => {
+    const day = state.data.days[d];
+    const updated = day.notesUpdated ? new Date(day.notesUpdated).toLocaleString('tr-TR') : '';
+    return `
+      <div class="note-card" onclick="openDay('${d}')">
+        <div class="note-card-header">
+          <div>
+            <div class="note-card-date">${formatDate(d)}</div>
+            <div class="note-card-day">${getDayName(d)}</div>
+          </div>
+          ${day.notesAuthor ? `<div class="note-card-author">✍️ ${escapeHtml(day.notesAuthor)}</div>` : ''}
+        </div>
+        <div class="note-card-text">${highlight(day.notes)}</div>
+        ${updated ? `<div class="note-card-time">${updated}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 function openDay(date) {
