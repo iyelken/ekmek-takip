@@ -1074,6 +1074,61 @@ button { cursor: pointer; }
 
 /* ========== NOTLAR / MESAJLAŞMA ========== */
 
+/* Tarih Seçici (Notlar sayfası) */
+.notes-date-picker {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notes-date-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.notes-date-display-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.notes-date-display {
+  text-align: center;
+  cursor: pointer;
+  pointer-events: none;
+  user-select: none;
+}
+
+.notes-date-main {
+  font-family: 'Fraunces', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.notes-date-sub {
+  font-size: 11px;
+  color: var(--text-mute);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.notes-date-display.is-today .notes-date-sub {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.notes-date-display.is-all .notes-date-main {
+  color: var(--accent);
+}
+
 /* Filtre chip sayaç badge */
 .filter-count {
   display: inline-block;
@@ -2257,6 +2312,29 @@ button { cursor: pointer; }
 
       <!-- Patron Notları -->
       <div id="notesContent">
+
+        <!-- Tarih Seçici -->
+        <div class="notes-date-picker">
+          <div class="notes-date-bar">
+            <button class="date-nav" onclick="changeNotesDate(-1)" title="Önceki gün">‹</button>
+            <div class="notes-date-display-wrapper">
+              <div class="notes-date-display" id="notesDateDisplay">
+                <div class="notes-date-main" id="notesDateMain">—</div>
+                <div class="notes-date-sub" id="notesDateSub">—</div>
+              </div>
+              <input type="date" id="notesDatePicker" class="date-picker-overlay" onchange="setNotesDate(this.value)">
+            </div>
+            <button class="date-nav" onclick="changeNotesDate(1)" title="Sonraki gün">›</button>
+          </div>
+
+          <!-- Hızlı geçiş chip'leri -->
+          <div class="filter-chips" id="notesDateChips" style="margin:0;justify-content:center">
+            <div class="chip" data-quick="yesterday">Dün</div>
+            <div class="chip active" data-quick="today">📍 Bugün</div>
+            <div class="chip" data-quick="tomorrow">Yarın</div>
+            <div class="chip" data-quick="all">📚 Tüm Günler</div>
+          </div>
+        </div>
         
         <!-- Yeni Mesaj Yazma -->
         <div class="section" id="newNoteSection">
@@ -3740,6 +3818,14 @@ $$('.nav-btn').forEach(btn => {
     if (pageId === 'reports') renderReports();
     if (pageId === 'history') renderHistory();
     if (pageId === 'settings') renderSettings();
+    if (pageId === 'notes') {
+      // İlk girişte bugünü seç (state null ise)
+      if (notesSelectedDate === null && !window._notesInitialized) {
+        notesSelectedDate = todayKey();
+        window._notesInitialized = true;
+      }
+      renderNotes();
+    }
   });
 });
 
@@ -4219,6 +4305,7 @@ let currentNotesFilter = 'all';
 let replyingToNoteId = null;
 let editingMessageId = null;
 let composerPriority = 'normal';
+let notesSelectedDate = null; // null = tüm günler, ISO string = belirli gün
 
 function renderNotes() {
   // Staff için kapalı
@@ -4238,12 +4325,15 @@ function renderNotes() {
   // Eski "gün notları"nı bir kez taşı (migration)
   migrateOldDayNotes();
 
+  // Tarih display'i güncelle
+  updateNotesDateDisplay();
+
   const messages = (state.data.messages || []).filter(m => !m.archived);
   
   // Hatırlatma kontrolü - bugün vadesi gelen notları "due" olarak işaretle
   const todayIso = todayKey();
   
-  // Sayaçlar
+  // Sayaçlar (TÜM mesajlar için, tarih filtresi olmadan)
   const counts = {
     all: messages.length,
     active: messages.filter(m => m.isTask && !m.doneAt).length,
@@ -4258,6 +4348,22 @@ function renderNotes() {
 
   // Filtre uygula
   let filtered = messages.slice();
+  
+  // === TARİH FİLTRESİ ===
+  // notesSelectedDate null ise tümü, değilse o tarihe ait mesajlar
+  // Bir mesaj o tarihe "ait" demek:
+  //   - O gün yazılmış (createdAt o güne düşer) VEYA
+  //   - O güne hatırlatma konulmuş (reminderDate)
+  if (notesSelectedDate) {
+    filtered = filtered.filter(m => {
+      const createdIso = isoFromDate(new Date(m.createdAt));
+      if (createdIso === notesSelectedDate) return true;
+      if (m.reminderDate === notesSelectedDate) return true;
+      return false;
+    });
+  }
+  
+  // === DİĞER FİLTRELER ===
   if (currentNotesFilter === 'active') {
     filtered = filtered.filter(m => m.isTask && !m.doneAt);
   } else if (currentNotesFilter === 'done') {
@@ -4300,9 +4406,10 @@ function renderNotes() {
     return (b.createdAt || 0) - (a.createdAt || 0);
   });
 
-  countEl.textContent = filtered.length + (searchTerm || currentNotesFilter !== 'all' 
-    ? ' / ' + messages.length 
-    : ' mesaj');
+  countEl.textContent = filtered.length + ' mesaj' + 
+    ((searchTerm || currentNotesFilter !== 'all' || notesSelectedDate) 
+      ? ' (toplam ' + messages.length + ')' 
+      : '');
 
   if (messages.length === 0) {
     list.innerHTML = '<div class="empty-state"><div class="emoji">💬</div><h4>Henüz mesaj yok</h4><p>İlk mesajını yukarıdan yaz</p></div>';
@@ -4310,12 +4417,21 @@ function renderNotes() {
   }
 
   if (filtered.length === 0) {
-    const filterName = {
-      active: 'Aktif görev', done: 'Tamamlanan', reminder: 'Hatırlatma', urgent: 'Acil'
-    }[currentNotesFilter] || '';
-    const msg = searchTerm 
-      ? '"' + escapeHtml(searchTerm) + '" araması ile eşleşen sonuç yok' 
-      : filterName + ' kategorisinde mesaj yok';
+    let msg;
+    if (searchTerm) {
+      msg = '"' + escapeHtml(searchTerm) + '" araması ile eşleşen sonuç yok';
+    } else if (notesSelectedDate) {
+      const dateLabel = formatDate(notesSelectedDate) + ' · ' + getDayName(notesSelectedDate);
+      const filterPart = {
+        active: ' aktif görev', done: ' tamamlanmış görev', reminder: ' hatırlatma', urgent: ' acil mesaj'
+      }[currentNotesFilter] || ' mesaj';
+      msg = dateLabel + ' tarihinde' + filterPart + ' yok';
+    } else {
+      const filterName = {
+        active: 'Aktif görev', done: 'Tamamlanan', reminder: 'Hatırlatma', urgent: 'Acil'
+      }[currentNotesFilter] || '';
+      msg = filterName + ' kategorisinde mesaj yok';
+    }
     list.innerHTML = '<div class="empty-state"><div class="emoji">🔍</div><h4>Sonuç yok</h4><p>' + msg + '</p></div>';
     return;
   }
@@ -4515,6 +4631,109 @@ function renderMessageEditForm(m) {
 }
 
 // Eski "gün notları"nı yeni mesaj sistemine taşı (sadece bir kez)
+// === NOTLAR TARİH NAVİGASYONU ===
+function updateNotesDateDisplay() {
+  const display = $('notesDateDisplay');
+  const main = $('notesDateMain');
+  const sub = $('notesDateSub');
+  const picker = $('notesDatePicker');
+  
+  if (!display || !main || !sub) return;
+  
+  const todayIso = todayKey();
+  
+  // Class'ları temizle
+  display.classList.remove('is-today', 'is-all');
+  
+  // Hızlı geçiş chip'lerini güncelle
+  $$('#notesDateChips .chip').forEach(c => c.classList.remove('active'));
+  
+  if (notesSelectedDate === null) {
+    // Tüm günler
+    main.textContent = '📚 Tüm Günler';
+    sub.textContent = 'Filtre yok';
+    display.classList.add('is-all');
+    if (picker) picker.value = '';
+    
+    const allChip = document.querySelector('#notesDateChips .chip[data-quick="all"]');
+    if (allChip) allChip.classList.add('active');
+  } else {
+    // Belirli tarih
+    main.textContent = formatDate(notesSelectedDate);
+    
+    // Bugün/Dün/Yarın etiketi
+    const tomorrowDate = new Date();
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const yesterdayDate = new Date();
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const tomorrowIso = isoFromDate(tomorrowDate);
+    const yesterdayIso = isoFromDate(yesterdayDate);
+    
+    let dayLabel = getDayName(notesSelectedDate);
+    if (notesSelectedDate === todayIso) {
+      dayLabel = 'BUGÜN · ' + dayLabel;
+      display.classList.add('is-today');
+    } else if (notesSelectedDate === yesterdayIso) {
+      dayLabel = 'DÜN · ' + dayLabel;
+    } else if (notesSelectedDate === tomorrowIso) {
+      dayLabel = 'YARIN · ' + dayLabel;
+    }
+    sub.textContent = dayLabel;
+    
+    if (picker) picker.value = notesSelectedDate;
+    
+    // Chip aktive
+    let chipKey = null;
+    if (notesSelectedDate === todayIso) chipKey = 'today';
+    else if (notesSelectedDate === yesterdayIso) chipKey = 'yesterday';
+    else if (notesSelectedDate === tomorrowIso) chipKey = 'tomorrow';
+    
+    if (chipKey) {
+      const chip = document.querySelector('#notesDateChips .chip[data-quick="' + chipKey + '"]');
+      if (chip) chip.classList.add('active');
+    }
+  }
+}
+
+function changeNotesDate(delta) {
+  // Eğer "tüm günler" modundaysak, bugünden başla
+  let baseDate = notesSelectedDate || todayKey();
+  const d = new Date(baseDate + 'T12:00:00');
+  d.setDate(d.getDate() + delta);
+  notesSelectedDate = isoFromDate(d);
+  renderNotes();
+}
+window.changeNotesDate = changeNotesDate;
+
+function setNotesDate(iso) {
+  if (!iso) {
+    notesSelectedDate = null;
+  } else {
+    notesSelectedDate = iso;
+  }
+  renderNotes();
+}
+window.setNotesDate = setNotesDate;
+
+function setNotesQuickDate(quickKey) {
+  const today = new Date();
+  if (quickKey === 'today') {
+    notesSelectedDate = todayKey();
+  } else if (quickKey === 'yesterday') {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    notesSelectedDate = isoFromDate(d);
+  } else if (quickKey === 'tomorrow') {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    notesSelectedDate = isoFromDate(d);
+  } else if (quickKey === 'all') {
+    notesSelectedDate = null;
+  }
+  renderNotes();
+}
+window.setNotesQuickDate = setNotesQuickDate;
+
 function migrateOldDayNotes() {
   if (state.data._notesMigrated) return;
   if (!state.data.days) return;
@@ -4863,6 +5082,16 @@ document.addEventListener('DOMContentLoaded', () => {
         setComposerPriority(chip.dataset.priority);
       });
     });
+    
+    // Date quick chips (Dün/Bugün/Yarın/Tüm Günler)
+    const dateChips = document.getElementById('notesDateChips');
+    if (dateChips) {
+      dateChips.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          setNotesQuickDate(chip.dataset.quick);
+        });
+      });
+    }
   }, 100);
 });
 
